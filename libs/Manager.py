@@ -52,6 +52,19 @@ class Manager(object):
 				dossier.write("set timeout=" + conf.timeout + "\n")
 				dossier.write("set default=" + str(position) + "\n")
 				dossier.write("\n")
+
+				# Explicitly load gpt/msdos, modules, and boot drive until
+				# better detection is implemented. I've noticed that even if
+				# these modules aren't explictly loaded, GRUB 2 still works.
+				dossier.write("insmod part_msdos\n")
+				dossier.write("insmod part_gpt\n")
+
+				if conf.efi == 1:
+					dossier.write("insmod efi_gop\n")
+					dossier.write("insmod efi_uga\n")
+					dossier.write("insmod fat\n")
+
+				dossier.write("\n")
 				dossier.close()
 			else:
 				self.toolkit.die("Default boot entry not found")
@@ -81,11 +94,6 @@ class Manager(object):
 					dossier.write("menuentry \"Funtoo - " + kernel +
 						"\" {\n")
 
-					# Explicitly load gpt/msdos, modules, and boot drive until
-					# better detection is implemented
-					dossier.write("\tinsmod part_msdos\n")
-					dossier.write("\tinsmod part_gpt\n")
-					dossier.write("\n")
 					dossier.write("\tset root='" + conf.bootdrive + "'\n")
 					dossier.write("\n")
 					dossier.write("\tlinux " + full_kernel_path + "/vmlinuz " +
