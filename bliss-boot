@@ -1,0 +1,32 @@
+#!/usr/bin/env python
+
+# Copyright (C) 2014 Jonathan Vasquez <fearedbliss@funtoo.org>
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+from libs import Scanner
+from libs import Manager
+
+class Boot(object):
+	def __init__(self):
+		# Create the objects we will need
+		print("[Main] Initializing Objects ...")
+		self.scanner = Scanner.Scanner()
+		self.manager = Manager.Manager()
+
+	def start(self):
+		# Find all kernels in /boot/kernels
+		print("[Main] Starting ...")
+		self.scanner.find_kernels()
+		self.scanner.print_kernels()
+
+		self.manager.set_kernel_list(self.scanner.get_kernels())
+		self.manager.print_kernels()
+		self.manager.write_entries()
+		#self.manager.convert_to_list()
+
+if __name__ == "__main__":
+	booter = Boot()
+	booter.start()
