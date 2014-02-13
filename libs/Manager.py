@@ -4,15 +4,16 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from libs import Toolkit
+
 from etc import conf
 
 class Manager(object):
-	def __init__(self, scanner, toolkit):
+	def __init__(self):
 		# Kernel Names and Kernel Values
 		self.__ck_names = []
 		self.__ck_values = []
-		self.scanner = scanner
-		self.toolkit = toolkit
+		self.toolkit = Toolkit.Toolkit()
 
 	# Sets the kernel set to be used
 	def set_kernel_list(self, kernels):
@@ -23,7 +24,7 @@ class Manager(object):
 		self.convert_to_list()
 	
 	def print_kernels(self):
-		print("[Manager] Kernels Detected:")
+		print("[Manager] Kernels detected in configuration:")
 		for i in range(len(self.__ck_names)):
 			print("[Manager] " + self.__ck_names[i])
 
@@ -45,7 +46,7 @@ class Manager(object):
 				dossier.write("\n")
 				dossier.close()
 			else:
-				self.toolkit.die("Default entry not found")
+				self.toolkit.die("Default boot entry not found")
 		else:
 			self.toolkit.die("No bootloader defined in configuration")
 
@@ -57,6 +58,8 @@ class Manager(object):
 				# Depending the bootloader we have specified, generate
 				# its appropriate configuration.
 				if conf.bootloader == "grub2":
+					print("[Manager] Adding entry for " + kernel)
+
 					full_kernel_path = conf.bootdir + "/" + kernel
 
 					# Used to detect the partition layout of this specific root=

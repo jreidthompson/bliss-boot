@@ -32,7 +32,6 @@ class Scanner(object):
 	# Detect the partition style (gpt or mbr)
 	def detect_layout(self, options):
 		print("[Scanner] Detecting Partition Layout ...")
-
 		print("[Scanner] Options: " + options)
 
 		# Extract the root drive
@@ -41,10 +40,12 @@ class Scanner(object):
 		if match:
 			print("[Scanner] Match: " + match.group(1))
 
+		# Not recommended since it creates an explicit dependency to
+		# the 'parted' app. I'm not sure if this is desired.
+		
 		#results = subprocess.Popen(
-		 #         ["parted", .., "print"]
-
-				  #then pipe it to grep and filter out "Partition Style:"
+		#         ["parted", .., "print"]
+		#then pipe it to grep and filter out "Partition Style:"
 
 	# Get fstab information. We will use this to get /boot and /
 	def scan_fstab(self):
@@ -72,6 +73,14 @@ class Scanner(object):
 			for x in i.split():
 				print("again: " + x)
 
+	# Returns the kernel set that was gathered
 	def get_kernels(self):
 		self.find_kernels()
 		return self.__kernels
+
+	# Prints a list of detected kernels in the boot directory
+	def print_kernels(self):
+		print("[Scanner] Kernels detected in boot directory:")
+
+		for i in self.__kernels:
+			print("[Scanner] " + i)

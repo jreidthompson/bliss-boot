@@ -10,7 +10,7 @@ bootloader = "grub2"
 
 # GRUB 2 Specific Settings
 timeout = "3"
-default = "3.12.10-KS.03"
+default = "3.12.10-KS.01"
 
 # 'bootdrive' format examples:
 # /dev/sda        (hd0)
@@ -21,8 +21,5 @@ bootdrive = "(hd0, gpt1)"
 
 # Add your kernels and options here
 kernels = {
-	"3.12.9-KS.01" : "root=/dev/mapper/vg-one1 options='ro'",
-	"3.12.9-KS.02" : "root=/dev/sda2 options='ro'",
-	"3.12.10-KS.03" : "root=/dev/sda3 options='ro'",
-	"3.13.1-KS.04" : "root=/dev/sda4 options='ro'",
+	"3.12.10-KS.01" : "root=/dev/mapper/vg-one1 options='ro'",
 }
