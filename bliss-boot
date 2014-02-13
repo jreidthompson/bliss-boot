@@ -33,6 +33,9 @@ class Boot(object):
 		# Print the kernels found in the configuration file
 		self.manager.print_kernels()
 
+		# Checks to see that at least one kernel entry will be written
+		self.manager.check_kernels()
+
 		# Create and write the bootloader configuration file
 		self.manager.write_entries()
 

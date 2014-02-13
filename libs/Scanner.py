@@ -8,14 +8,22 @@ import os
 import subprocess
 import re
 
+from libs import Toolkit
 from etc import conf
 
 class Scanner(object):
 	__kernels = set()
 	__fstab_vals = []
+	
+	def __init__(self):
+		self.toolkit = Toolkit.Toolkit()
 
 	def find_kernels(self):
 		print("[Scanner] Scanning: " + conf.bootdir) 
+
+		# Check to see if our boot directory exists before starting
+		if not os.path.exists(conf.bootdir):
+			self.toolkit.die("Kernel boot directory doesn't exist")
 
 		results = subprocess.Popen(
 		          ["ls", conf.bootdir],
@@ -28,6 +36,8 @@ class Scanner(object):
 		if out:
 			for i in out:
 				self.__kernels.add(i.strip())
+		else:
+			self.toolkit.die("No kernels in boot directory")
 	
 	# Detect the partition style (gpt or mbr)
 	def detect_layout(self, options):

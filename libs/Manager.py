@@ -27,6 +27,14 @@ class Manager(object):
 		print("[Manager] Kernels detected in configuration:")
 		for i in range(len(self.__ck_names)):
 			print("[Manager] " + self.__ck_names[i])
+	
+	# Checks to see if any kernels will be added to the configuration file
+	def check_kernels(self):
+		for i in self.__kernels:
+			if i in self.__ck_names:
+				return 0
+		
+		self.toolkit.die("Make sure you have a kernel and corresponding config")
 
 	def write_entries(self):
 		# Check to see what's the bootloader before we start adding
