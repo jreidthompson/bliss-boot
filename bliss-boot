@@ -8,24 +8,36 @@
 
 from libs import Scanner
 from libs import Manager
+from libs import Toolkit
 
 class Boot(object):
 	def __init__(self):
-		# Create the objects we will need
-		print("[Main] Initializing Objects ...")
+		self.toolkit = Toolkit.Toolkit()
 		self.scanner = Scanner.Scanner()
-		self.manager = Manager.Manager()
+		self.manager = Manager.Manager(self.scanner, self.toolkit)
 
 	def start(self):
-		# Find all kernels in /boot/kernels
-		print("[Main] Starting ...")
-		self.scanner.find_kernels()
-		self.scanner.print_kernels()
+		# Let's the user know that we are beginning
+		self.toolkit.start_message()
 
+		# Find all kernels in /boot/kernels
 		self.manager.set_kernel_list(self.scanner.get_kernels())
+
+		# Detect the /boot and / partitions and use them to correctly
+		# add the correct modules for grub 2
+		#self.scanner.scan_fstab()
+
+		# Print the kernels found
 		self.manager.print_kernels()
+
+		# Create and write the bootloader configuration file
 		self.manager.write_entries()
-		#self.manager.convert_to_list()
+
+		# Create a symlink in /boot that points back to itself
+		self.toolkit.create_bootlink()
+
+		# Let's the user know that we are done
+		self.toolkit.complete_message()
 
 if __name__ == "__main__":
 	booter = Boot()

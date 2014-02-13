@@ -6,14 +6,13 @@
 
 import os
 import subprocess
+import re
 
 from etc import conf
 
 class Scanner(object):
 	__kernels = set()
-
-	def __init__(self):
-		print("[Scanner] Activated")
+	__fstab_vals = []
 
 	def find_kernels(self):
 		print("[Scanner] Scanning: " + conf.bootdir) 
@@ -23,18 +22,56 @@ class Scanner(object):
 				  stdout=subprocess.PIPE,
 		          universal_newlines=True)
 		
-		ou = results.stdout.readlines()
+		out = results.stdout.readlines()
 
 		# Add kernels to out kernel set
-		if ou:
-			for i in ou:
+		if out:
+			for i in out:
 				self.__kernels.add(i.strip())
-		
-	def print_kernels(self):
-		print("[Scanner] Kernels Detected: ")
+	
+	# Detect the partition style (gpt or mbr)
+	def detect_layout(self, options):
+		print("[Scanner] Detecting Partition Layout ...")
 
-		for i in self.__kernels:
-			print("[Scanner] Kernel: " + i)
+		print("[Scanner] Options: " + options)
+
+		# Extract the root drive
+		match = re.search('root=(.*) ', options)
+
+		if match:
+			print("[Scanner] Match: " + match.group(1))
+
+		#results = subprocess.Popen(
+		 #         ["parted", .., "print"]
+
+				  #then pipe it to grep and filter out "Partition Style:"
+
+	# Get fstab information. We will use this to get /boot and /
+	def scan_fstab(self):
+		print("[Scanner] Scanning /etc/fstab")
+
+		r1 = subprocess.Popen(
+		          ["cat", "/etc/fstab"],
+		          stdout=subprocess.PIPE,
+		          universal_newlines=True)
+
+		r2 = subprocess.Popen(
+		          ["grep", "-E", "/boot"],
+		          stdin=r1.stdout,
+		          stdout=subprocess.PIPE,
+		          universal_newlines=True)
+
+		out = r2.stdout.readlines()
+
+		if out:
+			for i in out:
+				print(i.strip())
+				self.__fstab_vals.append(i.strip())
+
+		for i in self.__fstab_vals:
+			for x in i.split():
+				print("again: " + x)
 
 	def get_kernels(self):
+		self.find_kernels()
 		return self.__kernels
