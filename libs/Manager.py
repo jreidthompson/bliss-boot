@@ -42,12 +42,12 @@ class Manager(object):
 		# Check to see what's the bootloader before we start adding
 		# all the entries, depending the bootloader we can cleanly start
 		# adding generic information like default kernel, timeouts, etc
-		if conf.bootloader == "grub2":
-			print("[Manager] Generating GRUB 2 configuration ...")
+		position = self.search(conf.default)
 
-			position = self.search(conf.default)
+		if position != -1:
+			if conf.bootloader == "grub2":
+				print("[Manager] Generating GRUB 2 configuration ...")
 
-			if position != -1:
 				# Open it in write mode (erase old file) to start from a
 				# clean slate.
 				dossier = open("grub.cfg", "w")
@@ -68,23 +68,36 @@ class Manager(object):
 
 				dossier.write("\n")
 				dossier.close()
+			elif conf.bootloader == "extlinux":
+				print("[Manager] Generating extlinux configuration ...")
+
+				dossier = open("extlinux.conf", "w")
+				dossier.write("TIMEOUT " + str(int(conf.timeout) * 10) + "\n")
+				dossier.write("UI " + conf.el_ui + "\n")
+				dossier.write("\n")
+				dossier.write("MENU TITLE " + conf.el_m_title + "\n")
+				dossier.write("MENU COLOR title " + conf.el_c_title + "\n")
+				dossier.write("MENU COLOR border " + conf.el_c_border + "\n")
+				dossier.write("MENU COLOR unsel " + conf.el_c_unsel + "\n")
+				dossier.write("\n")
+				dossier.close()
 			else:
-				self.toolkit.die("Default boot entry not found")
+				self.toolkit.die("No bootloader defined in configuration")
 		else:
-			self.toolkit.die("No bootloader defined in configuration")
+			self.toolkit.die("Default boot entry not found")
 
 		for kernel in self.__kernels:
 			# If the kernel is found then add the entry
 			position = self.search(kernel)
 
 			if position != -1:
+				print("[Manager] Adding entry for " + kernel)
+
+				full_kernel_path = conf.bootdir + "/" + kernel
+
 				# Depending the bootloader we have specified, generate
 				# its appropriate configuration.
 				if conf.bootloader == "grub2":
-					print("[Manager] Adding entry for " + kernel)
-
-					full_kernel_path = conf.bootdir + "/" + kernel
-
 					# Open it in append mode since the header was previously
 					# created before.
 					dossier = open("grub.cfg", "a")
@@ -104,6 +117,18 @@ class Manager(object):
 						conf.kernels[kernel] + "\n")
 					dossier.write("\tinitrd " + full_kernel_path + "/initrd\n")
 					dossier.write("}\n\n")
+					dossier.close()
+				elif conf.bootloader == "extlinux":
+					dossier = open("extlinux.conf", "a")
+					dossier.write("LABEL Funtoo" + str(position) + "\n")
+					dossier.write("\tMENU LABEL Funtoo " + kernel +
+					"\n")
+					dossier.write("\tLINUX " + full_kernel_path + "/vmlinuz" +
+					"\n")
+					dossier.write("\tINITRD " + full_kernel_path + "/initrd" +
+					"\n")
+					dossier.write("\tAPPEND " + conf.kernels[kernel] + "\n")
+					dossier.write("\n")
 					dossier.close()
 			else:
 				print("[Manager] Skipping " + kernel + " since it has been " + 
