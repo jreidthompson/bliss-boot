@@ -13,7 +13,7 @@ bootloader = "grub2"
 # 'timeout' is automatically multiplied by 10 for extlinux
 timeout = "3"
 
-default = "3.12.10-KS.01"
+default = "3.12.11-KS.01"
 
 # GRUB 2 specific settings
 efi = 0
@@ -36,7 +36,5 @@ bootdrive = ""
 
 # Add your kernels and options here
 kernels = {
-	"3.12.10-KS.01" : "root=/dev/sda1 options='ro'",
 	"3.12.11-KS.01" : "root=/dev/sda1 options='ro'",
-	"3.12.12-KS.01" : "root=/dev/sda1 options='ro'",
 }
