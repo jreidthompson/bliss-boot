@@ -5,6 +5,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from libs import Toolkit
+from libs import Scanner
 
 from etc import conf
 
@@ -14,6 +15,7 @@ class Manager(object):
 		self.__ck_names = []
 		self.__ck_values = []
 		self.toolkit = Toolkit.Toolkit()
+		self.scanner = Scanner.Scanner()
 
 	# Sets the kernel set to be used
 	def set_kernel_list(self, kernels):
@@ -83,18 +85,20 @@ class Manager(object):
 
 					full_kernel_path = conf.bootdir + "/" + kernel
 
-					# Used to detect the partition layout of this specific root=
-					# does not always work since people could have non-physical
-					# partitions: /dev/mapper/<>, /dev/mdX, etc
-					#self.scanner.detect_layout(self.__ck_values[position])
-
 					# Open it in append mode since the header was previously
 					# created before.
 					dossier = open("grub.cfg", "a")
 					dossier.write("menuentry \"Funtoo - " + kernel +
 						"\" {\n")
 
-					dossier.write("\tset root='" + conf.bootdrive + "'\n")
+					# If 'bootdrive' isn't set, try to autodetect
+					# using the /boot entry in /etc/fstab
+					if not conf.bootdrive:
+						bootdrive = self.scanner.get_bootdrive()
+						dossier.write("\tset root='" + bootdrive + "'\n")
+					else:
+						dossier.write("\tset root='" + conf.bootdrive + "'\n")
+
 					dossier.write("\n")
 					dossier.write("\tlinux " + full_kernel_path + "/vmlinuz " +
 						conf.kernels[kernel] + "\n")
@@ -103,7 +107,8 @@ class Manager(object):
 					dossier.close()
 			else:
 				print("[Manager] Skipping " + kernel + " since it has been " + 
-				"found but has not been defined in conf.py")
+				"found in " + conf.bootdir + " but has not been defined " +
+				"in conf.py")
 
 	# Converts the dictionary into two separate lists so that we can perform
 	# index operations (Example: set default=2)
@@ -114,7 +119,6 @@ class Manager(object):
 		for x in conf.kernels.values():
 			self.__ck_values.append(x)
 
-	
 	# Returns the index for this kernel
 	def search(self, target):
 		for i in range(len(self.__ck_names)):

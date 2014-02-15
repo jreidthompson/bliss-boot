@@ -5,6 +5,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import os
+import string
 
 from etc import conf
 
@@ -33,3 +34,15 @@ class Toolkit(object):
 	# Let's the user know that we are done
 	def complete_message(self):
 		print("[Toolkit] Complete!")
+
+	# Get the index for a letter in the alphabet
+	def get_alph_index(self, letter):
+		alphabet = string.ascii_lowercase
+
+		count = 0
+
+		for let in alphabet:
+			if let == letter:
+				return count
+
+			count = count + 1

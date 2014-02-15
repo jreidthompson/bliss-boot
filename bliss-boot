@@ -26,10 +26,6 @@ class Boot(object):
 		# Prints the kernels found in /boot/kernels
 		self.scanner.print_kernels()
 
-		# Detect the /boot and / partitions and use them to correctly
-		# add the correct modules for grub 2
-		#self.scanner.scan_fstab()
-
 		# Print the kernels found in the configuration file
 		self.manager.print_kernels()
 
