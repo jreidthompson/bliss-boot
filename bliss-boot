@@ -14,7 +14,7 @@ class Boot(object):
 	def __init__(self):
 		self.toolkit = Toolkit.Toolkit()
 		self.scanner = Scanner.Scanner()
-		self.manager = Manager.Manager()
+		self.manager = Manager.Manager(self.scanner)
 
 	def start(self):
 		# Let's the user know that we are beginning

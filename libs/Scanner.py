@@ -17,6 +17,10 @@ class Scanner(object):
 	
 	def __init__(self):
 		self.toolkit = Toolkit.Toolkit()
+		self.__lvm = 0
+		self.__gpt = 0
+		self.__dos = 0
+		self.__none = 0
 
 	def find_kernels(self):
 		print("[Scanner] Scanning: " + conf.bootdir) 
@@ -104,9 +108,14 @@ class Scanner(object):
 
 			if out:
 				if out[0].strip() == "gpt":
+					self.__gpt = 1
 					return "gpt"
-				if out[0].strip() == "dos":
+				elif out[0].strip() == "dos":
+					self.__dos = 1
 					return "msdos"
+				else:
+					self.__none = 1
+					return "none"
 			else:
 				self.toolkit.die("Partition Layout could not be " + 
 				"detected for: " + temp)
@@ -120,7 +129,7 @@ class Scanner(object):
 		# First let's find the /boot in /etc/fstab
 		self.scan_fstab()
 
-		# Get the partition layout/style for this drive (gpt or msdos)
+		# Get the partition layout/style for this drive (gpt, msdos, or none)
 		layout = self.detect_layout()
 
 		if self.__fstab_vals:
@@ -177,9 +186,38 @@ class Scanner(object):
 					# contruct it here and return it
 					return "(md/" + m1.group(1) + ")"
 
-				# Implement support here if the boot drive is inside a lvm
-				# ...
-		
+				# --- LVM: mapper/<volume_group>-<logical_volume> ---
+				print("MG1: " + match.group())
+				m1 = re.search('mapper/(\w.-\w+)', match.group(1))
+
+				if m1:
+					self.__lvm = 1
+					return "(lvm/" + m1.group(1) + ")"
+
+				# --- LVM: <volume_group>/<logical_volume> ---
+				m1 = re.search('(\w+)/(\w+)', match.group(1))
+
+				if m1:
+					self.__lvm = 1
+					return "(lvm/" + m1.group(1) + "-" + m1.group(2) + ")"
+
+				# If the auto detection failed, let the user know to
+				# explictly set it
+				self.toolkit.die("Could not generate the appropriate " +
+				"bootdir entry. Please enter it manually in etc/conf.py")
+
+	# Returns 1 if lvm was detected in the above bootdir
+	def get_layout(self):
+		if self.__gpt == 1:
+			return "gpt"
+		elif self.__dos == 1:
+			return "msdos"
+		elif self.__none == 1:
+			return "none"
+	
+	def lvm_status(self):
+		if self.__lvm == 1:
+			return self.__lvm
 
 	# Returns the kernel set that was gathered
 	def get_kernels(self):

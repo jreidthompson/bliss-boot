@@ -25,15 +25,6 @@ el_c_title = "1;37;40"
 el_c_border = "30;40"
 el_c_unsel = "37;40"
 
-# 'bootdrive' format examples:
-# /dev/sda        (hd0)
-# /dev/sda1       (hd0,gpt1) or (hd0,msdos1)
-# /dev/sdb3       (hd1,gpt3) or (hd1,msdos3) 
-# /dev/md0        (md/0)
-
-# Leave 'bootdrive' blank for auto detection
-bootdrive = ""
-
 # Add your kernels and options here
 kernels = {
 	"3.12.11-KS.01" : "root=/dev/sda1 options='ro'",

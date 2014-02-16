@@ -5,17 +5,16 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from libs import Toolkit
-from libs import Scanner
 
 from etc import conf
 
 class Manager(object):
-	def __init__(self):
+	def __init__(self, scanner):
 		# Kernel Names and Kernel Values
 		self.__ck_names = []
 		self.__ck_values = []
 		self.toolkit = Toolkit.Toolkit()
-		self.scanner = Scanner.Scanner()
+		self.scanner = scanner
 
 	# Sets the kernel set to be used
 	def set_kernel_list(self, kernels):
@@ -46,6 +45,8 @@ class Manager(object):
 
 		if position != -1:
 			if conf.bootloader == "grub2":
+				bootdrive = self.scanner.get_bootdrive()
+
 				print("[Manager] Generating GRUB 2 configuration ...")
 
 				# Open it in write mode (erase old file) to start from a
@@ -55,11 +56,17 @@ class Manager(object):
 				dossier.write("set default=" + str(position) + "\n")
 				dossier.write("\n")
 
-				# Explicitly load gpt/msdos, modules, and boot drive until
-				# better detection is implemented. I've noticed that even if
-				# these modules aren't explictly loaded, GRUB 2 still works.
-				dossier.write("insmod part_msdos\n")
-				dossier.write("insmod part_gpt\n")
+				# Add modules to load depending machine
+				if self.scanner.get_layout() == "gpt": 
+					dossier.write("insmod part_gpt\n")
+				elif self.scanner.get_layout() == "msdos":
+					dossier.write("insmod part_msdos\n")
+				elif self.scanner.get_layout() == "none":
+					dossier.write("insmod part_gpt\n")
+					dossier.write("insmod part_msdos\n")
+
+				if self.scanner.lvm_status() == 1:
+					dossier.write("insmod lvm\n")
 
 				if conf.efi == 1:
 					dossier.write("insmod efi_gop\n")
@@ -103,15 +110,7 @@ class Manager(object):
 					dossier = open("grub.cfg", "a")
 					dossier.write("menuentry \"Funtoo - " + kernel +
 						"\" {\n")
-
-					# If 'bootdrive' isn't set, try to autodetect
-					# using the /boot entry in /etc/fstab
-					if not conf.bootdrive:
-						bootdrive = self.scanner.get_bootdrive()
-						dossier.write("\tset root='" + bootdrive + "'\n")
-					else:
-						dossier.write("\tset root='" + conf.bootdrive + "'\n")
-
+					dossier.write("\tset root='" + bootdrive + "'\n")
 					dossier.write("\n")
 					dossier.write("\tlinux " + full_kernel_path + "/vmlinuz " +
 						conf.kernels[kernel] + "\n")
