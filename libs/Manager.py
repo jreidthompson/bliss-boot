@@ -4,8 +4,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from libs import Toolkit
+import os
 
+from libs import Toolkit
 from etc import conf
 
 class Manager(object):
@@ -16,6 +17,9 @@ class Manager(object):
 		self.toolkit = Toolkit.Toolkit()
 		self.scanner = scanner
 
+		# Find all kernels in /boot/kernels
+		self.set_kernel_list(self.scanner.get_kernels())
+
 	# Sets the kernel set to be used
 	def set_kernel_list(self, kernels):
 		self.__kernels = kernels
@@ -23,7 +27,8 @@ class Manager(object):
 		# Convert the dictionary into two lists. This will let us
 		# search them by indexes.
 		self.convert_to_list()
-	
+
+	# Prints the kernels detected
 	def print_kernels(self):
 		print("[Manager] Kernels detected in configuration:")
 		for i in range(len(self.__ck_names)):
@@ -52,21 +57,26 @@ class Manager(object):
 				# Open it in write mode (erase old file) to start from a
 				# clean slate.
 				dossier = open("grub.cfg", "w")
-				dossier.write("set timeout=" + conf.timeout + "\n")
+				dossier.write("set timeout=" + str(conf.timeout) + "\n")
 				dossier.write("set default=" + str(position) + "\n")
 				dossier.write("\n")
 
-				# Add modules to load depending machine
-				if self.scanner.get_layout() == "gpt": 
+				# Add modules to load (depending machine layout)
+				layout = self.scanner.get_layout()
+
+				if layout == "gpt": 
 					dossier.write("insmod part_gpt\n")
-				elif self.scanner.get_layout() == "msdos":
+				elif layout == "msdos":
 					dossier.write("insmod part_msdos\n")
-				elif self.scanner.get_layout() == "none":
+				elif layout == "none":
 					dossier.write("insmod part_gpt\n")
 					dossier.write("insmod part_msdos\n")
 
 				if self.scanner.lvm_status() == 1:
 					dossier.write("insmod lvm\n")
+
+				if conf.zfs == 1:
+					dossier.write("insmod zfs\n")
 
 				if conf.efi == 1:
 					dossier.write("insmod efi_gop\n")
@@ -79,7 +89,7 @@ class Manager(object):
 				print("[Manager] Generating extlinux configuration ...")
 
 				dossier = open("extlinux.conf", "w")
-				dossier.write("TIMEOUT " + str(int(conf.timeout) * 10) + "\n")
+				dossier.write("TIMEOUT " + str(conf.timeout * 10) + "\n")
 				dossier.write("UI " + conf.el_ui + "\n")
 				dossier.write("\n")
 				dossier.write("MENU TITLE " + conf.el_m_title + "\n")
@@ -110,11 +120,24 @@ class Manager(object):
 					dossier = open("grub.cfg", "a")
 					dossier.write("menuentry \"Funtoo - " + kernel +
 						"\" {\n")
-					dossier.write("\tset root='" + bootdrive + "'\n")
-					dossier.write("\n")
-					dossier.write("\tlinux " + full_kernel_path + "/vmlinuz " +
-						conf.kernels[kernel] + "\n")
-					dossier.write("\tinitrd " + full_kernel_path + "/initrd\n")
+
+					if conf.zfs == 0:
+						dossier.write("\tset root='" + bootdrive + "'\n")
+						dossier.write("\n")
+
+					if conf.zfs == 0:
+						dossier.write("\tlinux " + full_kernel_path +
+						"/vmlinuz " + conf.kernels[kernel] + "\n")
+						dossier.write("\tinitrd " + full_kernel_path +
+						"/initrd\n")
+					else:
+						dossier.write("\tlinux " + bootdrive + "/@" +
+						full_kernel_path + "/vmlinuz " + conf.kernels[kernel] +
+						"\n")
+						dossier.write("\tinitrd " + bootdrive + "/@" +
+						full_kernel_path + "/initrd " + conf.kernels[kernel] +
+						"\n")
+
 					dossier.write("}\n\n")
 					dossier.close()
 				elif conf.bootloader == "extlinux":
@@ -133,6 +156,16 @@ class Manager(object):
 				print("[Manager] Skipping " + kernel + " since it has been " + 
 				"found in " + conf.bootdir + " but has not been defined " +
 				"in conf.py")
+
+		# Check to make sure that the file was created successfully.
+		# If so let the user know..
+		if conf.bootloader == "grub2" and os.path.isfile("grub.cfg"):
+			print("[Manager] 'grub.cfg' has been created!")
+		elif conf.bootloader == "extlinux" and os.path.isfile("extlinux.conf"):
+			print("[Manager] 'extlinux.conf' has been created!")
+		else:
+			self.toolkit.die("Either the file couldn't be created or the " +
+			"specified bootloader is unsupported.")
 
 	# Converts the dictionary into two separate lists so that we can perform
 	# index operations (Example: set default=2)

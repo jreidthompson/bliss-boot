@@ -11,12 +11,20 @@ bootdir = "/boot/kernels"
 bootloader = "grub2"
 
 # 'timeout' is automatically multiplied by 10 for extlinux
-timeout = "3"
+timeout = 3
 
+# Default kernel to boot into
 default = "3.12.11-KS.01"
 
 # GRUB 2 specific settings
 efi = 0
+
+# Only activate this if you are using 'whole disk zfs'
+# aka no /boot, and your /boot directory is inside the zfs pool
+zfs = 0
+
+# Dataset where your /boot directory is in
+zfs_boot = "tank/os/funtoo/root"
 
 # Extlinux specific settings
 el_ui = "menu.c32"
@@ -27,5 +35,5 @@ el_c_unsel = "37;40"
 
 # Add your kernels and options here
 kernels = {
-	"3.12.11-KS.01" : "root=/dev/sda1 options='ro'",
+	"3.12.11-KS.01" : "root=/dev/sda1 options='ro' quiet",
 }

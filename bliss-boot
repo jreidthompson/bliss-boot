@@ -17,12 +17,6 @@ class Boot(object):
 		self.manager = Manager.Manager(self.scanner)
 
 	def start(self):
-		# Let's the user know that we are beginning
-		self.toolkit.start_message()
-
-		# Find all kernels in /boot/kernels
-		self.manager.set_kernel_list(self.scanner.get_kernels())
-
 		# Prints the kernels found in /boot/kernels
 		self.scanner.print_kernels()
 
@@ -37,9 +31,6 @@ class Boot(object):
 
 		# Create a symlink in /boot that points back to itself
 		self.toolkit.create_bootlink()
-
-		# Let's the user know that we are done
-		self.toolkit.complete_message()
 
 if __name__ == "__main__":
 	booter = Boot()

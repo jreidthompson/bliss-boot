@@ -12,10 +12,9 @@ from libs import Toolkit
 from etc import conf
 
 class Scanner(object):
-	__kernels = set()
-	__fstab_vals = []
-	
 	def __init__(self):
+		self.__kernels = set()
+		self.__fstab_vals = []
 		self.toolkit = Toolkit.Toolkit()
 		self.__lvm = 0
 		self.__gpt = 0
@@ -85,6 +84,17 @@ class Scanner(object):
 	def detect_layout(self):
 		print("[Scanner] Detecting partition layout ...")
 
+		# If we are using 'whole disk zfs', we know for a fact that
+		# it's gpt (assuming the drive was formatted with zpool create).
+
+		# However, if the person partitioned the drive manually and is
+		# still using the whole drive for zfs (technically speaking),
+		# then they could be using mbr as well.. returning 'none' so that
+		# both part_<> can be included
+		if conf.zfs == 1:
+			self.__none = 1
+			return "none"
+
 		drive = self.__fstab_vals[0]
 
 		# Remove the partition number so that we can find the
@@ -126,6 +136,20 @@ class Scanner(object):
 	# Converts the fstab /boot drive entry to a grub 2 compatible format
 	# and returns it as a string: (gpt) /dev/sda1 -> (hd0,gpt1)
 	def get_bootdrive(self):
+		# If we are using 'whole disk zfs', then we won't have a /boot entry
+		# in /etc/fstab. So instead we will format the zfs_boot variable and
+		# return it ready to be used in grub2
+		if conf.zfs == 1:
+			self.detect_layout()
+
+			match = re.search('(/[a-zA-Z0-9_/]+)', conf.zfs_boot)
+
+			if match:
+				return match.group()
+
+			self.toolkit.die("Could not parse the 'zfs_boot' variable " +
+			"correctly.")
+
 		# First let's find the /boot in /etc/fstab
 		self.scan_fstab()
 
@@ -187,7 +211,6 @@ class Scanner(object):
 					return "(md/" + m1.group(1) + ")"
 
 				# --- LVM: mapper/<volume_group>-<logical_volume> ---
-				print("MG1: " + match.group())
 				m1 = re.search('mapper/(\w.-\w+)', match.group(1))
 
 				if m1:
@@ -206,7 +229,7 @@ class Scanner(object):
 				self.toolkit.die("Could not generate the appropriate " +
 				"bootdir entry. Please enter it manually in etc/conf.py")
 
-	# Returns 1 if lvm was detected in the above bootdir
+	# Gets the layout detected
 	def get_layout(self):
 		if self.__gpt == 1:
 			return "gpt"
@@ -215,6 +238,7 @@ class Scanner(object):
 		elif self.__none == 1:
 			return "none"
 	
+	# Returns 1 if lvm was detected in the above bootdir
 	def lvm_status(self):
 		if self.__lvm == 1:
 			return self.__lvm

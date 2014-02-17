@@ -27,14 +27,6 @@ class Toolkit(object):
 
 		quit(5)
 
-	# Let's the user know that we are starting
-	def start_message(self):
-		print("[Toolkit] Starting!")
-
-	# Let's the user know that we are done
-	def complete_message(self):
-		print("[Toolkit] Complete!")
-
 	# Get the index for a letter in the alphabet
 	def get_alph_index(self, letter):
 		alphabet = string.ascii_lowercase
