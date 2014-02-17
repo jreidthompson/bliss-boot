@@ -135,8 +135,7 @@ class Manager(object):
 						full_kernel_path + "/vmlinuz " + conf.kernels[kernel] +
 						"\n")
 						dossier.write("\tinitrd " + bootdrive + "/@" +
-						full_kernel_path + "/initrd " + conf.kernels[kernel] +
-						"\n")
+						full_kernel_path + "/initrd\n")
 
 					dossier.write("}\n\n")
 					dossier.close()
