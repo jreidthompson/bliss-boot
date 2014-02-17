@@ -58,7 +58,7 @@ class Scanner(object):
 		          universal_newlines=True)
 
 		r2 = subprocess.Popen(
-		          ["grep", "/boot"],
+		          ["grep", "/boot[[:blank:]]"],
 		          stdin=r1.stdout,
 		          stdout=subprocess.PIPE,
 		          universal_newlines=True)
