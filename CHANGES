@@ -1,3 +1,7 @@
+0.6.1
+--------------------------------------
+- Program will also delete 'extlinux.conf' is something went wrong
+
 0.6.0
 --------------------------------------
 - Added ability to disable the use of an 'initrd'
