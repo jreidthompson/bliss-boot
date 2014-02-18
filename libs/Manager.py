@@ -83,13 +83,16 @@ class Manager(object):
 					dossier.write("insmod efi_uga\n")
 					dossier.write("insmod fat\n")
 
+				if conf.zfs == 0:
+					dossier.write("\nset root='" + bootdrive + "'\n")
+
 				dossier.write("\n")
 				dossier.close()
 			elif conf.bootloader == "extlinux":
 				print("[Manager] Generating extlinux configuration ...")
 
 				dossier = open("extlinux.conf", "w")
-				dossier.write("TIMEOUT " + str(conf.timeout * 10) + "\n")
+				dossier.write("TIMEOUT " + str(int(conf.timeout * 10)) + "\n")
 				dossier.write("UI " + conf.el_ui + "\n")
 				dossier.write("\n")
 				dossier.write("MENU TITLE " + conf.el_m_title + "\n")
@@ -122,22 +125,23 @@ class Manager(object):
 						"\" {\n")
 
 					if conf.zfs == 0:
-						dossier.write("\tset root='" + bootdrive + "'\n")
-						dossier.write("\n")
-
-					if conf.zfs == 0:
 						dossier.write("\tlinux " + full_kernel_path +
 						"/vmlinuz " + conf.kernels[kernel] + "\n")
-						dossier.write("\tinitrd " + full_kernel_path +
-						"/initrd\n")
+
+						if conf.initrd == 1:
+							dossier.write("\tinitrd " + full_kernel_path +
+							"/initrd\n")
 					else:
 						dossier.write("\tlinux " + bootdrive + "/@" +
 						full_kernel_path + "/vmlinuz " + conf.kernels[kernel] +
 						"\n")
-						dossier.write("\tinitrd " + bootdrive + "/@" +
-						full_kernel_path + "/initrd\n")
+
+						if conf.initrd == 1:
+							dossier.write("\tinitrd " + bootdrive + "/@" +
+							full_kernel_path + "/initrd\n")
 
 					dossier.write("}\n\n")
+
 					dossier.close()
 				elif conf.bootloader == "extlinux":
 					dossier = open("extlinux.conf", "a")
@@ -146,8 +150,11 @@ class Manager(object):
 					"\n")
 					dossier.write("\tLINUX " + full_kernel_path + "/vmlinuz" +
 					"\n")
-					dossier.write("\tINITRD " + full_kernel_path + "/initrd" +
-					"\n")
+
+					if conf.initrd == 1:
+						dossier.write("\tINITRD " + full_kernel_path +
+						"/initrd\n")
+
 					dossier.write("\tAPPEND " + conf.kernels[kernel] + "\n")
 					dossier.write("\n")
 					dossier.close()
@@ -155,6 +162,17 @@ class Manager(object):
 				print("[Manager] Skipping " + kernel + " since it has been " + 
 				"found in " + conf.bootdir + " but has not been defined " +
 				"in conf.py")
+
+		# Append anything else the user wants automatically added
+		if conf.append == 1 and conf.append_stuff:
+			if conf.bootloader == "grub2":
+				dossier = open("grub.cfg", "a")
+				dossier.write(conf.append_stuff)
+				dossier.close()
+			elif conf.bootloader == "extlinux":
+				dossier = open("extlinux.conf", "a")
+				dossier.write(conf.append_stuff)
+				dossier.close()
 
 		# Check to make sure that the file was created successfully.
 		# If so let the user know..

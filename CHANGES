@@ -1,0 +1,5 @@
+0.6.0
+--------------------------------------
+- Added ability to disable the use of an 'initrd'
+- 'timeout' value will no longer return a decimal place for extlinux
+- Ability to append custom bootloader entries to final config
