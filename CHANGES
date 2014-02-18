@@ -1,3 +1,7 @@
+0.6.2
+--------------------------------------
+- Fixed typo from last version's check
+
 0.6.1
 --------------------------------------
 - Program will also delete 'extlinux.conf' is something went wrong

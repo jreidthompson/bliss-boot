@@ -25,7 +25,7 @@ class Toolkit(object):
 			if os.path.exists("grub.cfg"):
 				os.remove("grub.cfg")
 		elif conf.bootloader == "extlinux":
-			if.os.path.exists("extlinux.conf"):
+			if os.path.exists("extlinux.conf"):
 				os.remove("extlinux.conf")
 
 		quit(5)
