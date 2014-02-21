@@ -13,12 +13,12 @@ from libs.Toolkit import Toolkit
 class Boot(object):
 	def __init__(self):
 		self.toolkit = Toolkit()
-		self.scanner = Scanner()
-		self.manager = Manager(self.scanner)
+		#self.scanner = Scanner()
+		self.manager = Manager()
 
 	def start(self):
 		# Prints the kernels found in /boot/kernels
-		self.scanner.print_kernels()
+		#self.scanner.print_kernels()
 
 		# Print the kernels found in the configuration file
 		self.manager.print_kernels()

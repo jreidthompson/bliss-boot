@@ -3,7 +3,7 @@
 - Fixed a bug where the application was still looking at a set (unordered)
   when adding ordered entries into the configuration file. This caused the
   default entry value to be out of sync with the actual entries.
-- General code cleanups
+- General code cleanups and enhancements
 
 0.6.2
 --------------------------------------

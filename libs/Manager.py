@@ -7,55 +7,81 @@
 import os
 
 from libs.Toolkit import Toolkit
+from libs.Scanner import Scanner
+
 from etc import conf
 
 class Manager(object):
-        def __init__(self, scanner):
+        def __init__(self):
                 # Kernel Names and Kernel Values
-                self.__ck_names = []
-                self.__ck_values = []
+                self.ck_names = []
+                self.ck_values = []
                 self.toolkit = Toolkit()
-                self.scanner = scanner
+                self.scanner = Scanner()
 
                 # Find all kernels in /boot/kernels
                 self.set_kernel_list(self.scanner.get_kernels())
 
+                # Find all the kernels in etc/conf.py's 'kernels' variable
+                self.get_conf_kernels()
+
+                # Build a new list with the common kernels from both lists
+                # Basically it's an AND operation on two lists, which we will use
+                # to keep the bootloader entries and default kernel value in sync
+                self.common_kernels = self.toolkit.find_common_kernels(
+                                   self.kernels, self.ck_names)
+
+                self.print_common_kernels()
+
         # Sets the kernel set to be used
         def set_kernel_list(self, kernels):
-                self.__kernels = kernels
+                self.kernels = kernels
 
-                # Convert the dictionary into two lists. This will let us
-                # search them by indexes.
-                self.convert_to_list()
+                for i in range(len(kernels)):
+                    print("I: " + kernels[i] + " Pos: " + str(i))
+
 
         # Prints the kernels detected
         def print_kernels(self):
                 print("[Manager] Kernels detected in configuration:")
-                for i in range(len(self.__ck_names)):
-                        print("[Manager] " + self.__ck_names[i])
+                for i in range(len(self.ck_names)):
+                        print("[Manager] " + self.ck_names[i])
         
         # Checks to see if any kernels will be added to the configuration file
         def check_kernels(self):
-                for i in self.__kernels:
-                        if i in self.__ck_names:
+                for i in self.kernels:
+                        if i in self.ck_names:
                                 return 0
                 
                 self.toolkit.die("Make sure you have a kernel and corresponding config")
 
-        # Converts the dictionary into two separate lists so that we can perform
-        # index operations (Example: set default=2)
-        def convert_to_list(self):
+        # Converts the etc/conf.py's kernels dictionary into two separate lists
+        # so that we can perform index operations (Example: set default=2)
+        def get_conf_kernels(self):
                 for x in conf.kernels.keys():
-                        self.__ck_names.append(x)
+                        print("Adding Key: " + x)
+                        self.ck_names.append(x)
 
                 for x in conf.kernels.values():
-                        self.__ck_values.append(x)
+                        self.ck_values.append(x)
 
-        # Returns the index for this kernel
+        # Returns the index for this kernel in the /boot/kernels list
         def search(self, target):
-                for i in range(len(self.__ck_names)):
-                        if self.__ck_names[i] == target:
+                for i in range(len(self.kernels)):
+                        if self.kernels[i] == target:
                                 return i
+
+                return -1
+
+        # Returns the index for this kernel in the etc/conf.py's list
+        def search_ck(self, target):
+                print("Searching CK: " + target)
+                for i in range(len(self.ck_names)):
+                        if self.ck_names[i] == target:
+                                print("Found CK: " + str(i))
+                                return i
+
+                print("Not found CK: " + target)
 
                 return -1
 
@@ -63,7 +89,7 @@ class Manager(object):
                 # Check to see what's the bootloader before we start adding
                 # all the entries, depending the bootloader we can cleanly start
                 # adding generic information like default kernel, timeouts, etc
-                position = self.search(conf.default)
+                position = self.search_ck(conf.default)
 
                 if position != -1:
                         if conf.bootloader == "grub2":
@@ -121,11 +147,12 @@ class Manager(object):
                         else:
                                 self.toolkit.die("No bootloader defined in configuration")
                 else:
-                        self.toolkit.die("Default boot entry not found")
+                        self.toolkit.die("Default boot entry not found in " + conf.bootdir)
 
-                for kernel in self.__ck_names:
-                        # If the kernel is found then add the entry
-                        position = self.search(kernel)
+                # For every kernel in /boot/kernels, search etc/conf.py before adding
+                # and then add what needs to be added..
+                for kernel in self.kernels:
+                        position = self.search_ck(kernel)
 
                         if position != -1:
                                 print("[Manager] Adding entry for " + kernel)
@@ -199,3 +226,8 @@ class Manager(object):
                 else:
                         self.toolkit.die("Either the file couldn't be created or the " +
                         "specified bootloader is unsupported.")
+
+        # Prints the kernels found in common
+        def print_common_kernels(self):
+            for kernel in range(len(self.common_kernels)):
+                print("Common: " + kernel)
