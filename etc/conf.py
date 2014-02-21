@@ -47,7 +47,6 @@ el_c_unsel = "37;40"
 # ---------- Kernels & Options ----------
 kernels = {
 	'3.12.12-KS.01' : 'root=/dev/sda1 options="ro" quiet',
-	'3.13' : 'root=/dev/sda1 options="ro" quiet',
 }
 
 

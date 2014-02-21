@@ -10,48 +10,45 @@ import string
 from etc import conf
 
 class Toolkit(object):
-        # Creates a symlink in /boot that points back to itself
-        def create_bootlink(self):
-                if not os.path.exists("/boot/boot"):
-                        os.chdir("/boot")
-                        os.symlink(".", "boot")
+	# Creates a symlink in /boot that points back to itself
+	def create_bootlink(self):
+		if not os.path.exists("/boot/boot"):
+			os.chdir("/boot")
+			os.symlink(".", "boot")
 
-        # Cleanly exit the application
-        def die(self, message):
-                print("[Error] " + message + ". Exiting ...")
+	# Cleanly exit the application
+	def die(self, message):
+		print("[Error] " + message + ". Exiting ...")
 
-                # Remove the incomplete bootloader file
-                if conf.bootloader == "grub2":
-                        if os.path.exists("grub.cfg"):
-                                os.remove("grub.cfg")
-                elif conf.bootloader == "extlinux":
-                        if os.path.exists("extlinux.conf"):
-                                os.remove("extlinux.conf")
+		# Remove the incomplete bootloader file
+		if conf.bootloader == "grub2":
+			if os.path.exists("grub.cfg"):
+				os.remove("grub.cfg")
+		elif conf.bootloader == "extlinux":
+			if os.path.exists("extlinux.conf"):
+				os.remove("extlinux.conf")
 
-                quit(5)
+		quit(5)
 
-        # Get the index for a letter in the alphabet
-        def get_alph_index(self, letter):
-                alphabet = string.ascii_lowercase
+	# Get the index for a letter in the alphabet
+	def get_alph_index(self, letter):
+		alphabet = string.ascii_lowercase
 
-                count = 0
+		count = 0
 
-                for let in alphabet:
-                        if let == letter:
-                                return count
+		for let in alphabet:
+			if let == letter:
+				return count
 
-                        count = count + 1
+			count = count + 1
 
-        # Find values in common from two lists and return a third list
-        def find_common_kernels(self, list_a, list_b):
-           common_list = []
+	# Find values in common from two lists and return a third list
+	def find_common_kernels(self, list_a, list_b):
+		common_list = []
 
-           for a in list_a:
-                for b in list_b:
-                    if a == b:
-                        print("Commonality found: " + a + " " + b)
-                    common.list.append(a)
+		for a in list_a:
+			for b in list_b:
+				if a == b:
+					common_list.append(a)
 
-             return common_list
-
-                
+		return common_list
