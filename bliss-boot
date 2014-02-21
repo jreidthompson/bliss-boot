@@ -7,6 +7,9 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from libs.Manager import Manager
+from libs.Toolkit import Toolkit
+
+tools = Toolkit()
 
 class Boot(object):
 	def __init__(self):
@@ -17,7 +20,7 @@ class Boot(object):
 		self.manager.write_entries()
 
 		# Create a symlink in /boot that points back to itself
-		self.toolkit.create_bootlink()
+		tools.create_bootlink()
 
 if __name__ == "__main__":
 	booter = Boot()

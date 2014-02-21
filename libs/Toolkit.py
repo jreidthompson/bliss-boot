@@ -7,18 +7,28 @@
 import os
 import string
 
+from subprocess import call
+
 from etc import conf
 
 class Toolkit(object):
 	# Creates a symlink in /boot that points back to itself
 	def create_bootlink(self):
 		if not os.path.exists("/boot/boot"):
+			self.eprint("Toolkit", "Creating /boot symlink in /boot ...")
+
 			os.chdir("/boot")
 			os.symlink(".", "boot")
 
+			if not os.path.exists("/boot/boot"):
+				self.ewarn("[Toolkit] Error creating /boot symlink!")
+			else:
+				self.esucc("[Toolkit] Successfully created /boot symlink!")
+
 	# Cleanly exit the application
 	def die(self, message):
-		print("[Error] " + message + ". Exiting ...")
+		call(["echo", "-e", "\e[1;31m[Toolkit] " + message + 
+		      ". Exiting ...\e[0;m"])
 
 		# Remove the incomplete bootloader file
 		if conf.bootloader == "grub2":
@@ -52,3 +62,15 @@ class Toolkit(object):
 					common_list.append(a)
 
 		return common_list
+
+	# Prints a message with the module name included
+	def eprint(self, module, message):
+		call(["echo", "-e", "\e[1;36m[" + module + "] " + message + "\e[0;m "])
+
+	# Used for successful entries
+	def esucc(self, x):
+		call(["echo", "-e", "\e[1;32m" + x + "\e[0;m"])
+
+	# Used for warnings
+	def ewarn(self, x):
+		call(["echo", "-e", "\e[1;33m" + x + "\e[0;m "])

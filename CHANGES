@@ -1,9 +1,11 @@
-0.6.3
+0.7.0
 --------------------------------------
 - Fixed a bug where the application was still looking at a set (unordered)
   when adding ordered entries into the configuration file. This caused the
   default entry value to be out of sync with the actual entries.
 - General code cleanups and enhancements
+- Refactoring was done of some stuff
+- Colored messages
 
 0.6.2
 --------------------------------------
