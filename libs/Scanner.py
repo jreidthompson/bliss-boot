@@ -8,14 +8,14 @@ import os
 import subprocess
 import re
 
-from libs import Toolkit
+from libs.Toolkit import Toolkit
 from etc import conf
 
 class Scanner(object):
 	def __init__(self):
 		self.__kernels = set()
 		self.__fstab_vals = []
-		self.toolkit = Toolkit.Toolkit()
+		self.toolkit = Toolkit()
 		self.__lvm = 0
 		self.__gpt = 0
 		self.__dos = 0
@@ -82,8 +82,6 @@ class Scanner(object):
 	# Detect the partition style (gpt or mbr) and 
 	# returns either "gpt" or "msdos" as a string
 	def detect_layout(self):
-		print("[Scanner] Detecting partition layout ...")
-
 		# If we are using 'whole disk zfs', we know for a fact that
 		# it's gpt (assuming the drive was formatted with zpool create).
 

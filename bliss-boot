@@ -6,15 +6,15 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from libs import Scanner
-from libs import Manager
-from libs import Toolkit
+from libs.Scanner import Scanner
+from libs.Manager import Manager
+from libs.Toolkit import Toolkit
 
 class Boot(object):
 	def __init__(self):
-		self.toolkit = Toolkit.Toolkit()
-		self.scanner = Scanner.Scanner()
-		self.manager = Manager.Manager(self.scanner)
+		self.toolkit = Toolkit()
+		self.scanner = Scanner()
+		self.manager = Manager(self.scanner)
 
 	def start(self):
 		# Prints the kernels found in /boot/kernels
@@ -30,7 +30,7 @@ class Boot(object):
 		self.manager.write_entries()
 
 		# Create a symlink in /boot that points back to itself
-		self.toolkit.create_bootlink()
+		#self.toolkit.create_bootlink()
 
 if __name__ == "__main__":
 	booter = Boot()
