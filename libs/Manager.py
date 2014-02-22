@@ -91,27 +91,20 @@ class Manager(object):
 				dossier.write("set default=" + str(position) + "\n")
 				dossier.write("\n")
 
-				# Add modules to load (depending machine layout)
-				layout = scanner.get_layout()
-
-				if layout == "gpt": 
-					dossier.write("insmod part_gpt\n")
-				elif layout == "msdos":
-					dossier.write("insmod part_msdos\n")
-				elif layout == "none":
-					dossier.write("insmod part_gpt\n")
-					dossier.write("insmod part_msdos\n")
-
-				if scanner.lvm_status() == 1:
-					dossier.write("insmod lvm\n")
-
-				if conf.zfs == 1:
-					dossier.write("insmod zfs\n")
+				dossier.write("insmod part_gpt\n")
+				dossier.write("insmod part_msdos\n")
 
 				if conf.efi == 1:
 					dossier.write("insmod efi_gop\n")
 					dossier.write("insmod efi_uga\n")
 					dossier.write("insmod fat\n")
+
+				if conf.zfs == 1:
+					dossier.write("insmod zfs\n")
+
+				if conf.goodies == 1:
+					for candy in conf.goody_bag:
+						dossier.write("insmod " + candy + "\n")
 
 				if conf.zfs == 0:
 					dossier.write("\nset root='" + bootdrive + "'\n")
