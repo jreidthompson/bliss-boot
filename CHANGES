@@ -1,7 +1,11 @@
 0.8.0
 --------------------------------------
-- Removed reliance on partition layout auto detection
+- Removed reliance on partition layout auto detection (only used for
+  appending the correct value to grub 2's name (i.e: (hd0,gpt1))
 - Added support for user definable modules (for GRUB 2)
+- Added a helper message if a person doesn't have /boot/kernels dir
+  (or whatever they set their conf.bootdir to)
+- Added header message containing author, license, version, etc
 
 0.7.0
 --------------------------------------

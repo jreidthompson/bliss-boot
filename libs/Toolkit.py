@@ -10,8 +10,16 @@ import string
 from subprocess import call
 
 from etc import conf
+from etc import other
 
 class Toolkit(object):
+	def print_info(self):
+		self.ewarn("---------------------------")
+		self.ewarn(other.pname + " - v" + other.pversion)
+		self.ewarn("Author: " + other.pauthor)
+		self.ewarn("Distributed under the " + other.plicense)
+		self.ewarn("---------------------------")
+
 	# Creates a symlink in /boot that points back to itself
 	def create_bootlink(self):
 		if not os.path.exists("/boot/boot"):

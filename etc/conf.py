@@ -37,9 +37,15 @@ zfs = 0
 
 # Adds all the modules specified on the list to the grub config
 # Feel free to specify or remove anything you use/don't use
-goodies = 0
+goodies = 1
 
-goody_bag = [ "lvm", "luks", "mdadm", "mdraid09", "mdraid1x" ]
+goody_bag = [
+	#"lvm",
+	#"luks",
+	#"mdadm",
+	#"mdraid09",
+	#"mdraid1x",
+]
 
 #---------- extlinux settings ----------
 el_ui = "menu.c32"

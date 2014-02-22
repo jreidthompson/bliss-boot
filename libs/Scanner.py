@@ -33,6 +33,12 @@ class Scanner(object):
 			else:
 				tools.esucc("[Scanner] " + conf.bootdir +
 				              " has been created.")
+				tools.ewarn("[Scanner] Please place your kernels inside " +
+				            conf.bootdir + "/<version> and then re-run the " +
+				            "program.")
+				tools.ewarn("[Scanner] Example: " + conf.bootdir + "/" +
+				            "3.12.12-KS.01/{vmlinuz, initrd}")
+				quit(3)
 
 		results = subprocess.Popen(
 		          ["ls", conf.bootdir],
@@ -80,6 +86,53 @@ class Scanner(object):
 		else:
 			tools.die("/boot could not be found in /etc/fstab")
 
+	# Detect the partition style (gpt or mbr) and returns either
+	# "gpt" or "msdos" as a string
+	def detect_layout(self):
+		# If we are using 'whole disk zfs', we know for a fact that
+		# it's gpt (assuming the drive was formatted with zpool create).
+
+		# However, if the person partitioned the drive manually and is
+		# still using the whole drive for zfs (technically speaking),
+		# then they could be using mbr as well.. returning 'none' so that
+		# both part_<> can be included
+		if conf.zfs == 1:
+			return "none"
+
+		drive = self.fstab_vals[0]
+
+		# Remove the partition number so that we can find the
+		# style of the drive itself
+		match = re.sub("\d$", " ", drive)
+
+		if match:
+			# use blkid /dev/<drive> and get PTTYPE
+			# example: blkid /dev/vda: -> /dev/vda: PTTYPE="gpt"
+			r1 = subprocess.Popen(
+			     ["blkid", match.strip()],
+			     stdout=subprocess.PIPE,
+			     stderr=subprocess.PIPE,
+			     universal_newlines=True)
+
+			r2 = subprocess.Popen(
+			     ["cut", "-d", "\"", "-f", "2"],
+			     stdin=r1.stdout,
+			     stdout=subprocess.PIPE,
+			     universal_newlines=True)
+
+			out = r2.stdout.readlines()
+
+			if out:
+				if out[0].strip() == "gpt":
+					return "gpt"
+				elif out[0].strip() == "dos":
+					return "msdos"
+				else:
+					return "none"
+			else:
+				tools.die("Partition Layout could not be " + 
+				"detected for: " + match)
+
 	# Converts the fstab /boot drive entry to a grub 2 compatible format
 	# and returns it as a string: (gpt) /dev/sda1 -> (hd0,gpt1)
 	def get_bootdrive(self):
@@ -97,6 +150,9 @@ class Scanner(object):
 
 		# First let's find the /boot in /etc/fstab
 		self.scan_fstab()
+
+		# Get the partition layout/style for this drive (gpt, msdos, or none)
+		layout = self.detect_layout()
 
 		if self.fstab_vals:
 			drive = self.fstab_vals[0]
