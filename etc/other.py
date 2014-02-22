@@ -7,5 +7,7 @@
 # Program Information
 pname = "Bliss Boot"
 pauthor = "Jonathan Vasquez"
-pversion = "0.8.1"
+pemail = "fearedbliss@funtoo.org"
+pcontact = pauthor + " <" + pemail + ">"
+pversion = "0.8.2"
 plicense = "MPL 2.0"
