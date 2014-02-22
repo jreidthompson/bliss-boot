@@ -1,3 +1,8 @@
+0.8.1
+--------------------------------------
+- Clearer helper message
+- Fixed a bug where the header message wasn't always being printed.
+
 0.8.0
 --------------------------------------
 - Removed reliance on partition layout auto detection (only used for

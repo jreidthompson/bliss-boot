@@ -7,5 +7,5 @@
 # Program Information
 pname = "Bliss Boot"
 pauthor = "Jonathan Vasquez"
-pversion = "0.8.0"
+pversion = "0.8.1"
 plicense = "MPL 2.0"

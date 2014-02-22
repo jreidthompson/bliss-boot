@@ -13,12 +13,11 @@ tools = Toolkit()
 
 class Boot(object):
 	def __init__(self):
+		# Print the header information
+		tools.print_info()
 		self.manager = Manager()
 
 	def start(self):
-		# Print the header information
-		tools.print_info()
-
 		# Create and write the bootloader configuration file
 		self.manager.write_entries()
 

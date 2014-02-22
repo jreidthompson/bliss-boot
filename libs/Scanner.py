@@ -34,8 +34,9 @@ class Scanner(object):
 				tools.esucc("[Scanner] " + conf.bootdir +
 				              " has been created.")
 				tools.ewarn("[Scanner] Please place your kernels inside " +
-				            conf.bootdir + "/<version> and then re-run the " +
-				            "program.")
+				            conf.bootdir + "/<version>,")
+				tools.ewarn("[Scanner] configure your settings in etc/conf.py" +
+				            ", and then re-run the program.")
 				tools.ewarn("[Scanner] Example: " + conf.bootdir + "/" +
 				            "3.12.12-KS.01/{vmlinuz, initrd}")
 				quit(3)
