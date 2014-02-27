@@ -9,7 +9,7 @@
 # Kernel Path and Bootloader Type
 bootdir = "/boot/kernels"
 
-# Supported bootloaders: grub2, extlinux
+# Supported bootloaders: grub2, extlinux, lilo
 bootloader = "grub2"
 
 # Is an initrd being used?
@@ -19,7 +19,7 @@ initrd = 1
 timeout = 3
 
 # Default kernel to boot into
-default = "3.12.12-KS.01"
+default = "3.12.13-KS.01"
 
 # If using 'whole disk zfs', dataset where your /boot directory is in
 zfs_boot = "tank/os/funtoo/root"
@@ -37,8 +37,6 @@ zfs = 0
 
 # Adds all the modules specified on the list to the grub config
 # Feel free to specify or remove anything you use/don't use
-goodies = 1
-
 goody_bag = [
 	#"lvm",
 	#"luks",
@@ -47,6 +45,7 @@ goody_bag = [
 	#"mdraid1x",
 ]
 
+
 #---------- extlinux settings ----------
 el_ui = "menu.c32"
 el_m_title = "Boot Menu"
@@ -54,10 +53,27 @@ el_c_title = "1;37;40"
 el_c_border = "30;40"
 el_c_unsel = "37;40"
 
+# If you enable this, it will disable the menu and automatically
+# boot your chosen default kernel. Leaving this at 0 will still boot
+# automatically but it will first show the menu, wait the timeout value
+# that you set above, and then boot the default kernel
+el_auto_boot = 0
+
+
+# --- lilo settings ---
+
+# Extra options that will be placed at the beginning of the lilo config
+lilo_bag = [
+	"prompt",
+	"compact",
+	#"lba32",
+	#"large-memory",
+]
+
 
 # ---------- Kernels & Options ----------
 kernels = {
-	'3.12.12-KS.01' : 'root=/dev/sda1 options="ro" quiet',
+	'3.12.13-KS.01' : 'root=/dev/sda1 options="ro" quiet',
 }
 
 

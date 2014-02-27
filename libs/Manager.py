@@ -9,10 +9,10 @@ import os
 from libs.Toolkit import Toolkit
 from libs.Scanner import Scanner
 
-from etc import conf
-
 tools = Toolkit()
 scanner = Scanner()
+
+conf = tools.get_conf()
 
 class Manager(object):
 	def __init__(self):
@@ -102,7 +102,7 @@ class Manager(object):
 				if conf.zfs == 1:
 					dossier.write("insmod zfs\n")
 
-				if conf.goodies == 1:
+				if conf.goody_bag:
 					for candy in conf.goody_bag:
 						dossier.write("insmod " + candy + "\n")
 
@@ -116,12 +116,33 @@ class Manager(object):
 
 				dossier = open("extlinux.conf", "w")
 				dossier.write("TIMEOUT " + str(int(conf.timeout * 10)) + "\n")
-				dossier.write("UI " + conf.el_ui + "\n")
+
+				if conf.el_auto_boot == 0:
+					dossier.write("UI " + conf.el_ui + "\n")
 				dossier.write("\n")
+				dossier.write("DEFAULT Funtoo" + str(position) + "\n\n")
 				dossier.write("MENU TITLE " + conf.el_m_title + "\n")
 				dossier.write("MENU COLOR title " + conf.el_c_title + "\n")
 				dossier.write("MENU COLOR border " + conf.el_c_border + "\n")
 				dossier.write("MENU COLOR unsel " + conf.el_c_unsel + "\n")
+				dossier.write("\n")
+				dossier.close()
+			elif conf.bootloader == "lilo":
+				tools.eprint("Manager", "Generating lilo configuration ...")
+
+				bootdrive = scanner.get_bootdrive()
+
+				dossier = open("lilo.conf", "w")
+
+				dossier.write("boot = " + bootdrive + "\n")
+				dossier.write("timeout = " + str(int(conf.timeout * 10)) + "\n")
+				dossier.write("default = " + conf.default  + "\n")
+
+				if conf.lilo_bag:
+					dossier.write("\n")
+					for lo in conf.lilo_bag:
+						dossier.write(lo + "\n")
+
 				dossier.write("\n")
 				dossier.close()
 			else:
@@ -180,6 +201,16 @@ class Manager(object):
 					dossier.write("\tAPPEND " + conf.kernels[kernel] + "\n")
 					dossier.write("\n")
 					dossier.close()
+				elif conf.bootloader == "lilo":
+					dossier = open("lilo.conf", "a")
+
+					dossier.write("image = " + full_kernel_path + "/vmlinuz\n")
+					dossier.write("\tlabel = " + kernel + "\n")
+					dossier.write("\tappend = '" + conf.kernels[kernel] +
+					              "'\n")
+					dossier.write("\tinitrd = " + full_kernel_path + 
+					              "/initrd\n\n")
+					dossier.close()
 			else:
 				tools.ewarn("[Manager] Skipping: " + kernel)
 
@@ -195,6 +226,10 @@ class Manager(object):
 				dossier = open("extlinux.conf", "a")
 				dossier.write(conf.append_stuff)
 				dossier.close()
+			elif conf.bootloader == "lilo":
+				dossier = open("lilo.conf", "a")
+				dossier.write(conf.append_stuff)
+				dossier.close()
 
 		# Check to make sure that the file was created successfully.
 		# If so let the user know..
@@ -202,6 +237,10 @@ class Manager(object):
 			tools.esucc("[Manager] 'grub.cfg' has been created!")
 		elif conf.bootloader == "extlinux" and os.path.isfile("extlinux.conf"):
 			tools.esucc("[Manager] 'extlinux.conf' has been created!")
+		elif conf.bootloader == "lilo" and os.path.isfile("lilo.conf"):
+			tools.esucc("[Manager] 'lilo.conf' has been created!")
+			tools.esucc("[Manager] Please place this file in /etc/lilo.conf " +
+			            "and run 'lilo -v'.")
 		else:
 			tools.die("Either the file couldn't be created or the " +
 			"specified bootloader is unsupported.")

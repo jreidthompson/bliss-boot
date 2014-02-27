@@ -1,4 +1,4 @@
-Bliss Boot - 0.8.2
+Bliss Boot - 0.8.3
 Jonathan Vasquez <fearedbliss@funtoo.org>
 Gentoo/Funtoo Linux
 
@@ -9,3 +9,4 @@ This program generates a bootloader configuration file.
 Supported bootloaders:
 - GRUB 2
 - extlinux
+- lilo

@@ -9,9 +9,10 @@ import subprocess
 import re
 
 from libs.Toolkit import Toolkit
-from etc import conf
 
 tools = Toolkit()
+
+conf = tools.get_conf()
 
 class Scanner(object):
 	def __init__(self):
@@ -158,6 +159,18 @@ class Scanner(object):
 		if self.fstab_vals:
 			drive = self.fstab_vals[0]
 
+			# If the bootloader is lilo, just strip the number from the
+			# /boot drive and return the value. This is where lilo will
+			# install itself.
+			if conf.bootloader == "lilo":
+				# Remove the partition number
+				match = re.sub("\d$", " ", drive)
+
+				if match:
+					return match.strip()
+				else:
+					tools.die("Could not detect lilo's boot drive")
+
 			match = re.search('/dev/(.*)', drive)
 
 			if match:
@@ -168,8 +181,10 @@ class Scanner(object):
 				# mapper/vg-root
 				# vg/root
 
+
 				# --- Handle sdX or vdX drives ---
 				m1 = re.search('[s|v]d(\w+)', match.group(1))
+
 
 				if m1:
 					# Complete value, will be completed as function

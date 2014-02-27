@@ -1,3 +1,12 @@
+0.8.3
+--------------------------------------
+- bliss-boot's configuration file is now in /etc/bliss-boot/conf.py,
+  this means that the configuration file is protected by portage.
+- extlinux now uses the 'default' kernel as well
+- lilo support has been added
+- conf.py has a new auto-boot option for extlinux
+- some lilo options have been added into the conf.py
+
 0.8.2
 --------------------------------------
 - Clearer header with email details

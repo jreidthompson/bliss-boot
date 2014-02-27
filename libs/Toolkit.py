@@ -8,9 +8,15 @@ import os
 import string
 
 from subprocess import call
+from importlib import machinery
 
-from etc import conf
-from etc import other
+from . import other
+
+config_loc = "/etc/bliss-boot/conf.py"
+
+# Explictly load the conf file without using the 'get_conf' function
+loader = machinery.SourceFileLoader("conf", config_loc)
+conf = loader.load_module("conf")
 
 class Toolkit(object):
 	def print_info(self):
@@ -82,3 +88,9 @@ class Toolkit(object):
 	# Used for warnings
 	def ewarn(self, x):
 		call(["echo", "-e", "\e[1;33m" + x + "\e[0;m "])
+
+	# Returns the conf.py module
+	def get_conf(self):
+		loader = machinery.SourceFileLoader("conf", config_loc)
+		conf = loader.load_module("conf")
+		return conf
