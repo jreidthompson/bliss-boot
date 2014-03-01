@@ -12,6 +12,7 @@ from importlib import machinery
 
 from . import other
 
+# Path to config file
 config_loc = "/etc/bliss-boot/conf.py"
 
 # Explictly load the conf file without using the 'get_conf' function
@@ -29,20 +30,19 @@ class Toolkit(object):
 	# Creates a symlink in /boot that points back to itself
 	def create_bootlink(self):
 		if not os.path.exists("/boot/boot"):
-			self.eprint("Toolkit", "Creating /boot symlink in /boot ...")
+			self.eprint("Creating /boot symlink in /boot ...")
 
 			os.chdir("/boot")
 			os.symlink(".", "boot")
 
 			if not os.path.exists("/boot/boot"):
-				self.ewarn("[Toolkit] Error creating /boot symlink!")
+				self.ewarn("Error creating /boot symlink!")
 			else:
-				self.esucc("[Toolkit] Successfully created /boot symlink!")
+				self.esucc("Successfully created /boot symlink!")
 
 	# Cleanly exit the application
 	def die(self, message):
-		call(["echo", "-e", "\e[1;31m[Toolkit] " + message + 
-		      ". Exiting ...\e[0;m"])
+		call(["echo", "-e", "\e[1;31m" + message + "\e[0;m"])
 
 		# Remove the incomplete bootloader file
 		if conf.bootloader == "grub2":
@@ -51,6 +51,9 @@ class Toolkit(object):
 		elif conf.bootloader == "extlinux":
 			if os.path.exists("extlinux.conf"):
 				os.remove("extlinux.conf")
+		elif conf.bootloader == "lilo":
+			if os.path.exists("lilo.conf"):
+				os.remove("lilo.conf")
 
 		quit(5)
 
@@ -78,8 +81,8 @@ class Toolkit(object):
 		return common_list
 
 	# Prints a message with the module name included
-	def eprint(self, module, message):
-		call(["echo", "-e", "\e[1;36m[" + module + "] " + message + "\e[0;m "])
+	def eprint(self, x):
+		call(["echo", "-e", "\e[1;36m" + x + "\e[0;m "])
 
 	# Used for successful entries
 	def esucc(self, x):
@@ -94,3 +97,7 @@ class Toolkit(object):
 		loader = machinery.SourceFileLoader("conf", config_loc)
 		conf = loader.load_module("conf")
 		return conf
+
+	# Returns the path to the config file
+	def get_conf_file(self):
+		return config_loc

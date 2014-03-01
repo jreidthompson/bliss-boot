@@ -18,28 +18,29 @@ class Scanner(object):
 	def __init__(self):
 		self.kernels = []
 		self.fstab_vals = []
+		self.layout = ""
 
 	def find_kernels(self):
-		tools.eprint("Scanner", "Scanning " + conf.bootdir + " ...") 
+		tools.eprint("Scanning " + conf.bootdir + " ...") 
 
 		# Check to see if our boot directory exists before starting
 		if not os.path.exists(conf.bootdir):
-			tools.eprint("Scanner", conf.bootdir + " doesn't exist. " +
-			"Creating ...")
+			tools.eprint("The " + conf.bootdir + " directory doesn't exist. " +
+			             "Creating ...")
 
 			os.mkdir(conf.bootdir)
 
 			if not os.path.exists(conf.bootdir):
 				tools.die(conf.bootdir + " directory doesn't exist")
 			else:
-				tools.esucc("[Scanner] " + conf.bootdir +
-				              " has been created.")
-				tools.ewarn("[Scanner] Please place your kernels inside " +
-				            conf.bootdir + "/<version>,")
-				tools.ewarn("[Scanner] configure your settings in etc/conf.py" +
-				            ", and then re-run the program.")
-				tools.ewarn("[Scanner] Example: " + conf.bootdir + "/" +
-				            "3.12.12-KS.01/{vmlinuz, initrd}")
+				tools.esucc("The " + conf.bootdir + " directory has been " +
+				            "succesfully created.\n")
+
+				tools.ewarn("Please place your kernels inside " +
+				            conf.bootdir + "/<version>,\nconfigure " +
+				            tools.get_conf_file() + ", and then re-run " +
+							"the program. \n\nExample:\n\n" + conf.bootdir + 
+							"/3.12.12-KS.01/{vmlinuz, initrd}")
 				quit(3)
 
 		results = subprocess.Popen(
@@ -54,11 +55,15 @@ class Scanner(object):
 			for i in out:
 				self.kernels.append(i.strip())
 		else:
-			tools.die("No kernels found in " + conf.bootdir)
+			tools.die("No kernels found in " + conf.bootdir + ". "
+			          "A directory for\neach kernel you want must exist " +
+					  "in that location.\n\nExample:\n\n" +
+					  conf.bootdir + "/3.13.3-KS.01/\n" +
+					  conf.bootdir + "/3.12.1-KS.03/\n")
 
 	# Get fstab information. We will use this to get /boot
 	def scan_fstab(self):
-		tools.eprint("Scanner", "Scanning /etc/fstab for /boot ...")
+		tools.eprint("Scanning /etc/fstab for /boot ...")
 
 		r1 = subprocess.Popen(
 			 ["cat", "/etc/fstab"],
@@ -86,10 +91,10 @@ class Scanner(object):
 			for x in splits:
 				self.fstab_vals.append(x.strip())
 		else:
-			tools.die("/boot could not be found in /etc/fstab")
+			tools.die("/boot line could not be found in /etc/fstab")
 
-	# Detect the partition style (gpt or mbr) and returns either
-	# "gpt" or "msdos" as a string
+	# Detect the partition style for the /boot drive (gpt or mbr)
+	# and returns either "gpt" or "msdos" as a string
 	def detect_layout(self):
 		# If we are using 'whole disk zfs', we know for a fact that
 		# it's gpt (assuming the drive was formatted with zpool create).
@@ -99,6 +104,7 @@ class Scanner(object):
 		# then they could be using mbr as well.. returning 'none' so that
 		# both part_<> can be included
 		if conf.zfs == 1:
+			self.layout = "none"
 			return "none"
 
 		drive = self.fstab_vals[0]
@@ -126,13 +132,13 @@ class Scanner(object):
 
 			if out:
 				if out[0].strip() == "gpt":
-					return "gpt"
+					self.layout = "gpt"
 				elif out[0].strip() == "dos":
-					return "msdos"
+					self.layout = "msdos"
 				else:
-					return "none"
+					self.layout = "none"
 			else:
-				tools.die("Partition Layout could not be " + 
+				tools.die("Partition layout could not be " + 
 				"detected for: " + match)
 
 	# Converts the fstab /boot drive entry to a grub 2 compatible format
@@ -153,8 +159,8 @@ class Scanner(object):
 		# First let's find the /boot in /etc/fstab
 		self.scan_fstab()
 
-		# Get the partition layout/style for this drive (gpt, msdos, or none)
-		layout = self.detect_layout()
+		# Detect the layout of the /boot drive
+		self.detect_layout()
 
 		if self.fstab_vals:
 			drive = self.fstab_vals[0]
@@ -181,10 +187,8 @@ class Scanner(object):
 				# mapper/vg-root
 				# vg/root
 
-
 				# --- Handle sdX or vdX drives ---
 				m1 = re.search('[s|v]d(\w+)', match.group(1))
-
 
 				if m1:
 					# Complete value, will be completed as function
@@ -207,7 +211,7 @@ class Scanner(object):
 
 					if nump:
 						# add layout
-						cval = cval + "," + layout
+						cval = cval + "," + self.get_layout()
 
 						# add number part
 						cval = cval + nump.group(0)
@@ -237,17 +241,20 @@ class Scanner(object):
 
 				# If the auto detection failed, let the user know to
 				# explictly set it
-				tools.die("Could not generate the appropriate " +
-				"bootdir entry. Please enter it manually in etc/conf.py")
+				tools.die("Unable to generate the boot drive entry.")
 
 	# Returns the kernel set that was gathered
 	def get_kernels(self):
 		self.find_kernels()
 		return self.kernels
+	
+	# Get's the detected layout for the /boot line
+	def get_layout(self):
+		return self.layout
 
 	# Prints a list of detected kernels in the boot directory
 	def print_kernels(self):
-		tools.eprint("Scanner", "Kernels detected in boot directory:")
+		tools.eprint("Kernels detected in boot directory:")
 
 		for i in self.kernels:
-			tools.eprint("Scanner", i)
+			tools.eprint(i)

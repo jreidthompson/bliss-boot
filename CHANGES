@@ -1,3 +1,12 @@
+0.8.4
+--------------------------------------
+- Clearer output messages
+- Updated USAGE documentation
+- The "lilo.conf" file that was attempted to be generated will also
+  be removed if the application fails
+- Removed module debug prefixes from output
+- GRUB 2 partition modules will be written in config depending style
+
 0.8.3
 --------------------------------------
 - bliss-boot's configuration file is now in /etc/bliss-boot/conf.py,

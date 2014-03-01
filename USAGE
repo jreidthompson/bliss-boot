@@ -22,15 +22,17 @@ directories using just their name. Example:
 /boot/kernels/3.11.2-FN.03/System.map
 /boot/kernels/3.11.2-FN.03/config
 
-4. Edit the etc/conf.py and edit the 'bootloader' line to select
-your bootloader.
+4. Open /etc/bliss-boot/conf.py and edit the 'bootloader' line to
+select your bootloader.
 
-bootloader="grub2" or bootloader="extlinux" .. etc
+A) Set bootloader to your choice: grub2, extlinux, lilo, etc...
 
-5. Select your 'default' kernel (should match the directory name
+B) Select your 'default' kernel (should match the directory name
 /boot/kernels)
 
-6. Add your kernel to the 'kernels' list and its options. Example:
+C) Change any other options that are applicable to you
+
+D) Add your kernel to the 'kernels' list and its options. Example:
 
 kernels = {
 	"3.11.2-FN.03" : "root=/dev/sda4 options='ro' quiet",
@@ -38,7 +40,7 @@ kernels = {
 	"3.13.3-KS.01" : "root=/dev/mapper/vg-root quiet",
 }
 
-7. Run 'bliss-boot' and it should automatically detect your kernels
+5. Run 'bliss-boot' and it should automatically detect your kernels
 and desired options and generate a configuration file for your desire kernel
-in the directory where 'bliss-boot' is at. Take this file and put it in the
+in the directory you are currently in. Take this file and put it in the
 appropriate location in /boot.

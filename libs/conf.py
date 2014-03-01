@@ -19,7 +19,7 @@ initrd = 1
 timeout = 3
 
 # Default kernel to boot into
-default = "3.12.13-KS.01"
+default = "3.12.13-KS.02"
 
 # If using 'whole disk zfs', dataset where your /boot directory is in
 zfs_boot = "tank/os/funtoo/root"
@@ -73,7 +73,7 @@ lilo_bag = [
 
 # ---------- Kernels & Options ----------
 kernels = {
-	'3.12.13-KS.01' : 'root=/dev/sda1 options="ro" quiet',
+	'3.12.13-KS.02' : 'root=/dev/sda1 options="ro" quiet',
 }
 
 

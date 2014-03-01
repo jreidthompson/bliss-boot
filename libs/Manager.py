@@ -37,15 +37,19 @@ class Manager(object):
 
 	# Prints the kernels detected in etc/conf.py
 	def print_kernels(self):
-		tools.eprint("Manager", "Kernels detected in configuration:")
+		tools.eprint("Kernels detected in configuration:")
 
 		for i in range(len(self.ck_names)):
-			tools.eprint("Manager", self.ck_names[i])
+			tools.eprint(self.ck_names[i])
 	
 	# Checks to see if any kernels will be added to the configuration file
 	def check_kernels(self):
 		if not self.common_kernels:
-			tools.die("Make sure you have a kernel and corresponding config")
+			tools.die("Please add your desired kernels and " + 
+			          "their options to the 'kernels' list\n" + 
+					  "in " + tools.get_conf_file() + ". " +
+					  "These entries should match the kernels " +
+					  "you\nhave in " + conf.bootdir + ".")
 
 	# Converts the etc/conf.py's kernels dictionary into two separate lists
 	# so that we can perform index operations (Example: set default=2)
@@ -70,7 +74,7 @@ class Manager(object):
 	# Prints the kernels found in common
 	def print_common_kernels(self):
 		for k in range(len(self.common_kernels)):
-			tools.eprint("Manager", "Common: " + self.common_kernels[k])
+			tools.eprint("Common: " + self.common_kernels[k])
 
 	def write_entries(self):
 		# Check to see what's the bootloader before we start adding
@@ -80,7 +84,7 @@ class Manager(object):
 
 		if position != -1:
 			if conf.bootloader == "grub2":
-				tools.eprint("Manager", "Generating GRUB 2 configuration ...")
+				tools.eprint("Generating GRUB 2 configuration ...")
 
 				bootdrive = scanner.get_bootdrive()
 
@@ -91,8 +95,19 @@ class Manager(object):
 				dossier.write("set default=" + str(position) + "\n")
 				dossier.write("\n")
 
-				dossier.write("insmod part_gpt\n")
-				dossier.write("insmod part_msdos\n")
+				# Write the modules that need to be inserted depending
+				# drive style. For whole disk zfs, none will be returned
+				# since a person can partition the drive manually and use msdos,
+				# or they can let zfs format their drive automatically with
+				# gpt. This amgiguity will be the reason both grub modules will
+				# be inserted.
+				if scanner.get_layout() == "gpt":
+					dossier.write("insmod part_gpt\n")
+				elif scanner.get_layout() == "msdos":
+					dossier.write("insmod part_msdos\n")
+				elif scanner.get_layout() == "none" or not scanner.get_layout():
+					dossier.write("insmod part_gpt\n")
+					dossier.write("insmod part_msdos\n")
 
 				if conf.efi == 1:
 					dossier.write("insmod efi_gop\n")
@@ -112,13 +127,14 @@ class Manager(object):
 				dossier.write("\n")
 				dossier.close()
 			elif conf.bootloader == "extlinux":
-				tools.eprint("Manager", "Generating extlinux configuration ...")
+				tools.eprint("Generating extlinux configuration ...")
 
 				dossier = open("extlinux.conf", "w")
 				dossier.write("TIMEOUT " + str(int(conf.timeout * 10)) + "\n")
 
 				if conf.el_auto_boot == 0:
 					dossier.write("UI " + conf.el_ui + "\n")
+
 				dossier.write("\n")
 				dossier.write("DEFAULT Funtoo" + str(position) + "\n\n")
 				dossier.write("MENU TITLE " + conf.el_m_title + "\n")
@@ -128,7 +144,7 @@ class Manager(object):
 				dossier.write("\n")
 				dossier.close()
 			elif conf.bootloader == "lilo":
-				tools.eprint("Manager", "Generating lilo configuration ...")
+				tools.eprint("Generating lilo configuration ...")
 
 				bootdrive = scanner.get_bootdrive()
 
@@ -146,16 +162,18 @@ class Manager(object):
 				dossier.write("\n")
 				dossier.close()
 			else:
-				tools.die("No bootloader defined in configuration")
+				tools.die("The bootloader defined in " + tools.get_conf_file() +
+				          " is not supported.")
 		else:
-			tools.die("Default boot entry not found in " + conf.bootdir)
+			tools.die("The default kernel entry in " + tools.get_conf_file() + 
+			          "\nwas not found in " + conf.bootdir)
 
 		# Add all our desired kernels
 		for kernel in self.kernels:
 			position = self.search(kernel)
 
 			if position != -1:
-				tools.esucc("[Manager] Adding: " + kernel)
+				tools.esucc("Adding: " + kernel)
 
 				full_kernel_path = conf.bootdir + "/" + kernel
 
@@ -212,11 +230,11 @@ class Manager(object):
 					              "/initrd\n\n")
 					dossier.close()
 			else:
-				tools.ewarn("[Manager] Skipping: " + kernel)
+				tools.ewarn("Skipping: " + kernel)
 
 		# Append anything else the user wants automatically added
 		if conf.append == 1 and conf.append_stuff:
-			tools.eprint("Manager", "Appending additional information ...")
+			tools.eprint("Appending additional information ...")
 
 			if conf.bootloader == "grub2":
 				dossier = open("grub.cfg", "a")
@@ -234,13 +252,13 @@ class Manager(object):
 		# Check to make sure that the file was created successfully.
 		# If so let the user know..
 		if conf.bootloader == "grub2" and os.path.isfile("grub.cfg"):
-			tools.esucc("[Manager] 'grub.cfg' has been created!")
+			tools.esucc("'grub.cfg' has been created!")
 		elif conf.bootloader == "extlinux" and os.path.isfile("extlinux.conf"):
-			tools.esucc("[Manager] 'extlinux.conf' has been created!")
+			tools.esucc("'extlinux.conf' has been created!")
 		elif conf.bootloader == "lilo" and os.path.isfile("lilo.conf"):
-			tools.esucc("[Manager] 'lilo.conf' has been created!")
-			tools.esucc("[Manager] Please place this file in /etc/lilo.conf " +
+			tools.esucc("'lilo.conf' has been created!")
+			tools.esucc("Please place this file in /etc/lilo.conf " +
 			            "and run 'lilo -v'.")
 		else:
 			tools.die("Either the file couldn't be created or the " +
-			"specified bootloader is unsupported.")
+			"specified\nbootloader isn't supported.")
