@@ -1,3 +1,17 @@
+0.8.5
+--------------------------------------
+- Fixed a bug where md devices weren't being generated correctly.
+  
+  Note: The application will still generate a file for extlinux,
+  or lilo even if it won't work. It is the user's responsability
+  to make sure if their bootloader does or doesn't support a specific
+  device configuration.
+
+  Example: If you have your /boot in /dev/md0, and you use lilo, and
+  it happens that lilo doesn't support booting from /dev/md0, the program
+  will still generate a lilo entry, and the boot in lilo.conf will 
+  equal /dev/md. This is not correct, but intended.
+
 0.8.4
 --------------------------------------
 - Clearer output messages

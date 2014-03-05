@@ -138,8 +138,11 @@ class Scanner(object):
 				else:
 					self.layout = "none"
 			else:
-				tools.die("Partition layout could not be " + 
-				"detected for: " + match)
+				# If the layout couldn't be detected then return
+				# none so that both msdos/gpt can be inserted.
+				# This will happen if the user has a raid or lvm
+				# device as their /boot.
+				self.layout = "none"
 
 	# Converts the fstab /boot drive entry to a grub 2 compatible format
 	# and returns it as a string: (gpt) /dev/sda1 -> (hd0,gpt1)
