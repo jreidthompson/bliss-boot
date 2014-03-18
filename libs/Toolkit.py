@@ -27,19 +27,6 @@ class Toolkit(object):
 		self.ewarn("| Distributed under the " + other.plicense)
 		self.ewarn("---------------------------")
 
-	# Creates a symlink in /boot that points back to itself
-	def create_bootlink(self):
-		if not os.path.exists("/boot/boot"):
-			self.eprint("Creating /boot symlink in /boot ...")
-
-			os.chdir("/boot")
-			os.symlink(".", "boot")
-
-			if not os.path.exists("/boot/boot"):
-				self.ewarn("Error creating /boot symlink!")
-			else:
-				self.esucc("Successfully created /boot symlink!")
-
 	# Cleanly exit the application
 	def die(self, message):
 		call(["echo", "-e", "\e[1;31m" + message + "\e[0;m"])
@@ -79,6 +66,27 @@ class Toolkit(object):
 					common_list.append(a)
 
 		return common_list
+
+	# Strips the first directory of the path passed. Used to get a good path and not need
+	# a boot symlink in /boot
+	def strip_head(self, path):
+		if path:
+			splinters = path.split("/")
+			srange = len(splinters)
+
+			if srange >= 3:
+				news = ""
+
+				for i in range(len(splinters))[2:]:
+					news = news + "/" + splinters[i]
+
+				return news
+			elif srange == 2:
+				# if two then that means we will be looking in that folder specifically for kernels
+				# so just return /
+				return "/"
+		else:
+			self.die("The value to strip is empty ...")
 
 	# Prints a message with the module name included
 	def eprint(self, x):

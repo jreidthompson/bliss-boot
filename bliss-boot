@@ -21,9 +21,6 @@ class Boot(object):
 		# Create and write the bootloader configuration file
 		self.manager.write_entries()
 
-		# Create a symlink in /boot that points back to itself
-		tools.create_bootlink()
-
 if __name__ == "__main__":
 	booter = Boot()
 	booter.start()

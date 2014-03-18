@@ -27,15 +27,14 @@ select your bootloader.
 
 A) Set bootloader to your choice: grub2, extlinux, lilo, etc...
 
-B) Select your 'default' kernel (should match the directory name
-/boot/kernels)
+B) Select your 'default' kernel (should match the directory name /boot/kernels)
 
 C) Change any other options that are applicable to you
 
 D) Add your kernel to the 'kernels' list and its options. Example:
 
 kernels = {
-	"3.11.2-FN.03" : "root=/dev/sda4 options='ro' quiet",
+	"3.11.2-FN.03" : "root=/dev/sda4 quiet",
 	"3.12.9-KS.01" : "root=/dev/sda4 options='ro' quiet",
 	"3.13.3-KS.01" : "root=/dev/mapper/vg-root quiet",
 }

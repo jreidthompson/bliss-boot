@@ -1,3 +1,9 @@
+0.9.0
+--------------------------------------
+- Fixed a bug where the program would crash on creating a symlink on uefi machines's vfat /boot.
+- Symlinks are no longer created
+- The application now writes a relative path to your kernel/initrd files
+
 0.8.5
 --------------------------------------
 - Fixed a bug where md devices weren't being generated correctly.

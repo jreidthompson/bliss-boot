@@ -25,8 +25,7 @@ class Manager(object):
 		# Build a new list with the common kernels from both lists
 		# Basically it's an AND operation on two lists, which we will use
 		# to keep the bootloader entries and default kernel value in sync
-		self.common_kernels = tools.find_common_kernels(
-		                      self.kernels, self.ck_names)
+		self.common_kernels = tools.find_common_kernels(self.kernels, self.ck_names)
 
 		# Checks to see that at least one kernel entry will be written
 		self.check_kernels()
@@ -45,11 +44,9 @@ class Manager(object):
 	# Checks to see if any kernels will be added to the configuration file
 	def check_kernels(self):
 		if not self.common_kernels:
-			tools.die("Please add your desired kernels and " + 
-			          "their options to the 'kernels' list\n" + 
-					  "in " + tools.get_conf_file() + ". " +
-					  "These entries should match the kernels " +
-					  "you\nhave in " + conf.bootdir + ".")
+			tools.die("Please add your desired kernels and their options to the 'kernels' list\n" + 
+					  "in " + tools.get_conf_file() + ". These entries should match the kernels you\n" +
+					  "have in " + conf.bootdir + ".")
 
 	# Converts the etc/conf.py's kernels dictionary into two separate lists
 	# so that we can perform index operations (Example: set default=2)
@@ -162,11 +159,9 @@ class Manager(object):
 				dossier.write("\n")
 				dossier.close()
 			else:
-				tools.die("The bootloader defined in " + tools.get_conf_file() +
-				          " is not supported.")
+				tools.die("The bootloader defined in " + tools.get_conf_file() + " is not supported.")
 		else:
-			tools.die("The default kernel entry in " + tools.get_conf_file() + 
-			          "\nwas not found in " + conf.bootdir)
+			tools.die("The default kernel entry in " + tools.get_conf_file() + "\nwas not found in " + conf.bootdir)
 
 		# Add all our desired kernels
 		for kernel in self.kernels:
@@ -175,7 +170,8 @@ class Manager(object):
 			if position != -1:
 				tools.esucc("Adding: " + kernel)
 
-				full_kernel_path = conf.bootdir + "/" + kernel
+				cs = tools.strip_head(conf.bootdir)
+				full_kernel_path = cs + "/" + kernel
 
 				# Depending the bootloader we have specified, generate
 				# its appropriate configuration.
@@ -183,34 +179,26 @@ class Manager(object):
 					# Open it in append mode since the header was previously
 					# created before.
 					dossier = open("grub.cfg", "a")
-					dossier.write("menuentry \"Funtoo - " + kernel +
-							"\" {\n")
+					dossier.write("menuentry \"Funtoo - " + kernel + "\" {\n")
 
 					if conf.zfs == 0:
-						dossier.write("\tlinux " + full_kernel_path +
-						"/vmlinuz " + conf.kernels[kernel] + "\n")
+						dossier.write("\tlinux " + full_kernel_path + "/vmlinuz " + conf.kernels[kernel] + "\n")
 
 						if conf.initrd == 1:
-							dossier.write("\tinitrd " + full_kernel_path +
-							"/initrd\n")
+							dossier.write("\tinitrd " + full_kernel_path + "/initrd\n")
 					else:
-						dossier.write("\tlinux " + bootdrive + "/@" +
-						full_kernel_path + "/vmlinuz " + conf.kernels[kernel] +
-						"\n")
+						dossier.write("\tlinux " + bootdrive + "/@" + full_kernel_path + "/vmlinuz " + conf.kernels[kernel] + "\n")
 
 						if conf.initrd == 1:
-							dossier.write("\tinitrd " + bootdrive + "/@" +
-							full_kernel_path + "/initrd\n")
+							dossier.write("\tinitrd " + bootdrive + "/@" + full_kernel_path + "/initrd\n")
 
 					dossier.write("}\n\n")
 					dossier.close()
 				elif conf.bootloader == "extlinux":
 					dossier = open("extlinux.conf", "a")
 					dossier.write("LABEL Funtoo" + str(position) + "\n")
-					dossier.write("\tMENU LABEL Funtoo " + kernel +
-					"\n")
-					dossier.write("\tLINUX " + full_kernel_path + "/vmlinuz" +
-					"\n")
+					dossier.write("\tMENU LABEL Funtoo " + kernel + "\n")
+					dossier.write("\tLINUX " + full_kernel_path + "/vmlinuz" + "\n")
 
 					if conf.initrd == 1:
 						dossier.write("\tINITRD " + full_kernel_path +
@@ -221,13 +209,10 @@ class Manager(object):
 					dossier.close()
 				elif conf.bootloader == "lilo":
 					dossier = open("lilo.conf", "a")
-
 					dossier.write("image = " + full_kernel_path + "/vmlinuz\n")
 					dossier.write("\tlabel = " + kernel + "\n")
-					dossier.write("\tappend = '" + conf.kernels[kernel] +
-					              "'\n")
-					dossier.write("\tinitrd = " + full_kernel_path + 
-					              "/initrd\n\n")
+					dossier.write("\tappend = '" + conf.kernels[kernel] + "'\n")
+					dossier.write("\tinitrd = " + full_kernel_path + "/initrd\n\n")
 					dossier.close()
 			else:
 				tools.ewarn("Skipping: " + kernel)
@@ -257,8 +242,6 @@ class Manager(object):
 			tools.esucc("'extlinux.conf' has been created!")
 		elif conf.bootloader == "lilo" and os.path.isfile("lilo.conf"):
 			tools.esucc("'lilo.conf' has been created!")
-			tools.esucc("Please place this file in /etc/lilo.conf " +
-			            "and run 'lilo -v'.")
+			tools.esucc("Please place this file in /etc/lilo.conf and run 'lilo -v'.")
 		else:
-			tools.die("Either the file couldn't be created or the " +
-			"specified\nbootloader isn't supported.")
+			tools.die("Either the file couldn't be created or the specified\nbootloader isn't supported.")

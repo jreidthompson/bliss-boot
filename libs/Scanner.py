@@ -156,8 +156,7 @@ class Scanner(object):
 			if match:
 				return match.group()
 
-			tools.die("Could not parse the 'zfs_boot' variable " +
-			"correctly.")
+			tools.die("Could not parse the 'zfs_boot' variable correctly.")
 
 		# First let's find the /boot in /etc/fstab
 		self.scan_fstab()
