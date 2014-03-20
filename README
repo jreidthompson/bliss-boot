@@ -1,5 +1,5 @@
-Bliss Boot - 0.9.0
-Jonathan Vasquez <fearedbliss@funtoo.org>
+Bliss Boot - 0.10.0
+Jonathan Vasquez <jvasquez1011@gmail.com>
 Gentoo/Funtoo Linux
 
 Distributed under the MPL 2.0 which can be found in the LICENSE file.
@@ -9,4 +9,3 @@ This program generates a bootloader configuration file.
 Supported bootloaders:
 - GRUB 2
 - extlinux
-- lilo

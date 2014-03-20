@@ -1,4 +1,4 @@
-# Copyright (C) 2014 Jonathan Vasquez <fearedbliss@funtoo.org>
+# Copyright (C) 2014 Jonathan Vasquez <jvasquez1011@gmail.com>
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,7 +9,7 @@
 # Kernel Path and Bootloader Type
 bootdir = "/boot/kernels"
 
-# Supported bootloaders: grub2, extlinux, lilo
+# Supported bootloaders: grub2, extlinux
 bootloader = "grub2"
 
 # Is an initrd being used?
@@ -58,17 +58,6 @@ el_c_unsel = "37;40"
 # automatically but it will first show the menu, wait the timeout value
 # that you set above, and then boot the default kernel
 el_auto_boot = 0
-
-
-# --- lilo settings ---
-
-# Extra options that will be placed at the beginning of the lilo config
-lilo_bag = [
-	"prompt",
-	"compact",
-	#"lba32",
-	#"large-memory",
-]
 
 
 # ---------- Kernels & Options ----------

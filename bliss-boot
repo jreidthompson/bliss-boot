@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (C) 2014 Jonathan Vasquez <fearedbliss@funtoo.org>
+# Copyright (C) 2014 Jonathan Vasquez <jvasquez1011@gmail.com>
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,9 +15,20 @@ class Boot(object):
 	def __init__(self):
 		# Print the header information
 		tools.print_info()
+
+		# Gets parameters
+		tools.welcome()
+
+		# Sets up the Manager ;) (This is what is going to write our file)
 		self.manager = Manager()
 
+		# Sets the arguments retrieved by the parameters
+		self.manager.set_args(tools)
+
 	def start(self):
+		# Installs the bootloader
+		self.manager.install_bootloader()
+
 		# Create and write the bootloader configuration file
 		self.manager.write_entries()
 

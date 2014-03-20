@@ -1,4 +1,4 @@
-# Copyright (C) 2014 Jonathan Vasquez <fearedbliss@funtoo.org>
+# Copyright (C) 2014 Jonathan Vasquez <jvasquez1011@gmail.com>
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,7 +7,7 @@
 # Program Information
 pname = "Bliss Boot"
 pauthor = "Jonathan Vasquez"
-pemail = "fearedbliss@funtoo.org"
+pemail = "jvasquez1011@gmail.com"
 pcontact = pauthor + " <" + pemail + ">"
-pversion = "0.9.0"
+pversion = "0.10.0"
 plicense = "MPL 2.0"

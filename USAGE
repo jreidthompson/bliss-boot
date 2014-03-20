@@ -43,3 +43,19 @@ kernels = {
 and desired options and generate a configuration file for your desire kernel
 in the directory you are currently in. Take this file and put it in the
 appropriate location in /boot.
+
+-----------------
+
+Optional:
+
+To install the GRUB 2 bootloader automatically to your disk (/boot drive in fstab),
+you can use the following command:
+
+bliss-boot -G
+
+To install extlinux to your disk you can use the following command:
+
+bliss-boot -E <path to folder>
+
+bliss-boot will automatically detect if your drive is mbr or gpt and write the appropriate
+firmware to the disk and if it is GPT, it will also toggle the legacy bios bootable flag.

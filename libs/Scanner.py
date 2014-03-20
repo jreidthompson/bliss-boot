@@ -1,4 +1,4 @@
-# Copyright (C) 2014 Jonathan Vasquez <fearedbliss@funtoo.org>
+# Copyright (C) 2014 Jonathan Vasquez <jvasquez1011@gmail.com>
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -25,28 +25,21 @@ class Scanner(object):
 
 		# Check to see if our boot directory exists before starting
 		if not os.path.exists(conf.bootdir):
-			tools.eprint("The " + conf.bootdir + " directory doesn't exist. " +
-			             "Creating ...")
+			tools.eprint("The " + conf.bootdir + " directory doesn't exist. Creating ...")
 
 			os.mkdir(conf.bootdir)
 
 			if not os.path.exists(conf.bootdir):
 				tools.die(conf.bootdir + " directory doesn't exist")
 			else:
-				tools.esucc("The " + conf.bootdir + " directory has been " +
-				            "succesfully created.\n")
+				tools.esucc("The " + conf.bootdir + " directory has been succesfully created.\n")
 
-				tools.ewarn("Please place your kernels inside " +
-				            conf.bootdir + "/<version>,\nconfigure " +
-				            tools.get_conf_file() + ", and then re-run " +
-							"the program. \n\nExample:\n\n" + conf.bootdir + 
+				tools.ewarn("Please place your kernels inside " + conf.bootdir + "/<version>,\nconfigure " +
+				            tools.get_conf_file() + ", and then re-run the program. \n\nExample:\n\n" + conf.bootdir + 
 							"/3.12.12-KS.01/{vmlinuz, initrd}")
 				quit(3)
 
-		results = subprocess.Popen(
-		          ["ls", conf.bootdir],
-		          stdout=subprocess.PIPE,
-		          universal_newlines=True)
+		results = subprocess.Popen(["ls", conf.bootdir], stdout=subprocess.PIPE, universal_newlines=True)
 		
 		out = results.stdout.readlines()
 
@@ -55,31 +48,16 @@ class Scanner(object):
 			for i in out:
 				self.kernels.append(i.strip())
 		else:
-			tools.die("No kernels found in " + conf.bootdir + ". "
-			          "A directory for\neach kernel you want must exist " +
-					  "in that location.\n\nExample:\n\n" +
-					  conf.bootdir + "/3.13.3-KS.01/\n" +
-					  conf.bootdir + "/3.12.1-KS.03/\n")
+			tools.die("No kernels found in " + conf.bootdir + ". A directory for\neach kernel you want must exist " +
+					  "in that location.\n\nExample:\n\n" + conf.bootdir + "/3.13.3-KS.01/\n" + conf.bootdir + "/3.12.1-KS.03/\n")
 
 	# Get fstab information. We will use this to get /boot
 	def scan_fstab(self):
 		tools.eprint("Scanning /etc/fstab for /boot ...")
 
-		r1 = subprocess.Popen(
-			 ["cat", "/etc/fstab"],
-			 stdout=subprocess.PIPE,
-			 universal_newlines=True)
-
-		r2 = subprocess.Popen(
-			 ["grep", "/boot[[:blank:]]"],
-			 stdin=r1.stdout,
-			 stdout=subprocess.PIPE,
-			 universal_newlines=True)
-
-		r3 = subprocess.Popen(
-			 ["awk", "{print $1, $2, $3, $4, $5, $6}"],
-			 stdin=r2.stdout, stdout=subprocess.PIPE,
-			 universal_newlines=True)
+		r1 = subprocess.Popen(["cat", "/etc/fstab"], stdout=subprocess.PIPE, universal_newlines=True)
+		r2 = subprocess.Popen(["grep", "/boot[[:blank:]]"], stdin=r1.stdout, stdout=subprocess.PIPE, universal_newlines=True)
+		r3 = subprocess.Popen(["awk", "{print $1, $2, $3, $4, $5, $6}"], stdin=r2.stdout, stdout=subprocess.PIPE, universal_newlines=True)
 
 		out = r3.stdout.readlines()
 
@@ -111,22 +89,23 @@ class Scanner(object):
 
 		# Remove the partition number so that we can find the
 		# style of the drive itself
-		match = re.sub("\d$", " ", drive)
+		match = re.sub("\d$", "", drive)
+
+		# This is the partition number from above, this will be used
+		# to see the Legacy BIOS Bootable flag if the user uses extlinux and it's GPT
+		mnumber = re.search("\d+", drive)
+
+		if mnumber:
+			self.bootdr_num = mnumber.group()
 
 		if match:
+			# Save the drive root since we can use it later to write extlinux .bin
+			self.bootdr = match
+
 			# use blkid /dev/<drive> and get PTTYPE
 			# example: blkid /dev/vda: -> /dev/vda: PTTYPE="gpt"
-			r1 = subprocess.Popen(
-			     ["blkid", match.strip()],
-			     stdout=subprocess.PIPE,
-			     stderr=subprocess.PIPE,
-			     universal_newlines=True)
-
-			r2 = subprocess.Popen(
-			     ["cut", "-d", "\"", "-f", "2"],
-			     stdin=r1.stdout,
-			     stdout=subprocess.PIPE,
-			     universal_newlines=True)
+			r1 = subprocess.Popen(["blkid", match.strip()], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+			r2 = subprocess.Popen(["cut", "-d", "\"", "-f", "2"], stdin=r1.stdout, stdout=subprocess.PIPE, universal_newlines=True)
 
 			out = r2.stdout.readlines()
 
@@ -166,18 +145,6 @@ class Scanner(object):
 
 		if self.fstab_vals:
 			drive = self.fstab_vals[0]
-
-			# If the bootloader is lilo, just strip the number from the
-			# /boot drive and return the value. This is where lilo will
-			# install itself.
-			if conf.bootloader == "lilo":
-				# Remove the partition number
-				match = re.sub("\d$", " ", drive)
-
-				if match:
-					return match.strip()
-				else:
-					tools.die("Could not detect lilo's boot drive")
 
 			match = re.search('/dev/(.*)', drive)
 
@@ -260,3 +227,11 @@ class Scanner(object):
 
 		for i in self.kernels:
 			tools.eprint(i)
+
+	# Get the boot drive's root
+	def get_bootd_root(self):
+		return self.bootdr
+
+	# Get the boot drive's partition number
+	def get_bootd_num(self):
+		return self.bootdr_num

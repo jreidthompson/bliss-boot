@@ -1,4 +1,4 @@
-# Copyright (C) 2014 Jonathan Vasquez <fearedbliss@funtoo.org>
+# Copyright (C) 2014 Jonathan Vasquez <jvasquez1011@gmail.com>
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -72,8 +72,43 @@ class Manager(object):
 	def print_common_kernels(self):
 		for k in range(len(self.common_kernels)):
 			tools.eprint("Common: " + self.common_kernels[k])
+	
+	# Gets and sets the parameters retrieved from the parameters
+	def set_args(self, atool):
+		self.args_force = atool.get_args_force()
+		self.args_output = atool.get_args_output()
+		self.boot_install = atool.get_boot_install()
+		self.args_el_path = atool.get_el_path()
+	
+	# Installs the bootloader
+	def install_bootloader(self):
+		# What bootloader are we going to install?
+		bootl = self.boot_install
+
+		# Run this so we can set the layout that we need (we dont need the return value atm)
+		scanner.get_bootdrive()
+		layout = scanner.get_layout()
+		bootdr = scanner.get_bootd_root()
+		bootdr_num = scanner.get_bootd_num()
+
+		if bootl == 1:
+			tools.install_grub2(bootdr)
+		elif bootl == 2:
+			tools.install_extlinux(self.args_el_path, bootdr, bootdr_num, layout)
+		else:
+			tools.ewarn("Skipping bootloader installation ...")
 
 	def write_entries(self):
+		# Set up the output file
+		self.output_file = ""
+
+		if self.args_output != -1:
+			self.output_file = self.args_output
+		elif self.args_output == -1 and conf.bootloader == "grub2": 
+			self.output_file = "grub.cfg"
+		elif self.args_output == -1 and conf.bootloader == "extlinux":
+			self.output_file = "extlinux.conf"
+
 		# Check to see what's the bootloader before we start adding
 		# all the entries, depending the bootloader we can cleanly start
 		# adding generic information like default kernel, timeouts, etc
@@ -85,9 +120,14 @@ class Manager(object):
 
 				bootdrive = scanner.get_bootdrive()
 
-				# Open it in write mode (erase old file) to start from a
-				# clean slate.
-				dossier = open("grub.cfg", "w")
+				if os.path.exists(self.output_file):
+					if self.args_force == 1:
+						dossier = open(self.output_file, "w")
+					else:
+						tools.die("Target file: " + self.output_file + " already exists. Pass -f to overwrite.")
+				else:
+					dossier = open(self.output_file, "w")
+
 				dossier.write("set timeout=" + str(conf.timeout) + "\n")
 				dossier.write("set default=" + str(position) + "\n")
 				dossier.write("\n")
@@ -126,7 +166,14 @@ class Manager(object):
 			elif conf.bootloader == "extlinux":
 				tools.eprint("Generating extlinux configuration ...")
 
-				dossier = open("extlinux.conf", "w")
+				if os.path.exists(self.output_file):
+					if self.args_force == 1:
+						dossier = open(self.output_file, "w")
+					else:
+						tools.die("Target file: " + self.output_file + " already exists. Pass -f to overwrite.")
+				else:
+					dossier = open(self.output_file, "w")
+
 				dossier.write("TIMEOUT " + str(int(conf.timeout * 10)) + "\n")
 
 				if conf.el_auto_boot == 0:
@@ -138,24 +185,6 @@ class Manager(object):
 				dossier.write("MENU COLOR title " + conf.el_c_title + "\n")
 				dossier.write("MENU COLOR border " + conf.el_c_border + "\n")
 				dossier.write("MENU COLOR unsel " + conf.el_c_unsel + "\n")
-				dossier.write("\n")
-				dossier.close()
-			elif conf.bootloader == "lilo":
-				tools.eprint("Generating lilo configuration ...")
-
-				bootdrive = scanner.get_bootdrive()
-
-				dossier = open("lilo.conf", "w")
-
-				dossier.write("boot = " + bootdrive + "\n")
-				dossier.write("timeout = " + str(int(conf.timeout * 10)) + "\n")
-				dossier.write("default = " + conf.default  + "\n")
-
-				if conf.lilo_bag:
-					dossier.write("\n")
-					for lo in conf.lilo_bag:
-						dossier.write(lo + "\n")
-
 				dossier.write("\n")
 				dossier.close()
 			else:
@@ -178,7 +207,7 @@ class Manager(object):
 				if conf.bootloader == "grub2":
 					# Open it in append mode since the header was previously
 					# created before.
-					dossier = open("grub.cfg", "a")
+					dossier = open(self.output_file, "a")
 					dossier.write("menuentry \"Funtoo - " + kernel + "\" {\n")
 
 					if conf.zfs == 0:
@@ -195,7 +224,7 @@ class Manager(object):
 					dossier.write("}\n\n")
 					dossier.close()
 				elif conf.bootloader == "extlinux":
-					dossier = open("extlinux.conf", "a")
+					dossier = open(self.output_file, "a")
 					dossier.write("LABEL Funtoo" + str(position) + "\n")
 					dossier.write("\tMENU LABEL Funtoo " + kernel + "\n")
 					dossier.write("\tLINUX " + full_kernel_path + "/vmlinuz" + "\n")
@@ -207,13 +236,6 @@ class Manager(object):
 					dossier.write("\tAPPEND " + conf.kernels[kernel] + "\n")
 					dossier.write("\n")
 					dossier.close()
-				elif conf.bootloader == "lilo":
-					dossier = open("lilo.conf", "a")
-					dossier.write("image = " + full_kernel_path + "/vmlinuz\n")
-					dossier.write("\tlabel = " + kernel + "\n")
-					dossier.write("\tappend = '" + conf.kernels[kernel] + "'\n")
-					dossier.write("\tinitrd = " + full_kernel_path + "/initrd\n\n")
-					dossier.close()
 			else:
 				tools.ewarn("Skipping: " + kernel)
 
@@ -222,26 +244,17 @@ class Manager(object):
 			tools.eprint("Appending additional information ...")
 
 			if conf.bootloader == "grub2":
-				dossier = open("grub.cfg", "a")
+				dossier = open(self.output_file, "a")
 				dossier.write(conf.append_stuff)
 				dossier.close()
 			elif conf.bootloader == "extlinux":
-				dossier = open("extlinux.conf", "a")
-				dossier.write(conf.append_stuff)
-				dossier.close()
-			elif conf.bootloader == "lilo":
-				dossier = open("lilo.conf", "a")
+				dossier = open(self.output_file, "a")
 				dossier.write(conf.append_stuff)
 				dossier.close()
 
 		# Check to make sure that the file was created successfully.
 		# If so let the user know..
-		if conf.bootloader == "grub2" and os.path.isfile("grub.cfg"):
-			tools.esucc("'grub.cfg' has been created!")
-		elif conf.bootloader == "extlinux" and os.path.isfile("extlinux.conf"):
-			tools.esucc("'extlinux.conf' has been created!")
-		elif conf.bootloader == "lilo" and os.path.isfile("lilo.conf"):
-			tools.esucc("'lilo.conf' has been created!")
-			tools.esucc("Please place this file in /etc/lilo.conf and run 'lilo -v'.")
+		if os.path.isfile(self.output_file):
+			tools.esucc("'" + self.output_file + "' has been created!")
 		else:
 			tools.die("Either the file couldn't be created or the specified\nbootloader isn't supported.")

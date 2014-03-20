@@ -1,3 +1,9 @@
+0.10.0
+--------------------------------------
+- LILO support has been completely removed
+- Added parameter support:--output, --force, --install-extlinux, --install-grub2
+- Ability to install extlinux and grub2 to drive (including gptmbr for gpt users)
+
 0.9.0
 --------------------------------------
 - Fixed a bug where the program would crash on creating a symlink on uefi machines's vfat /boot.
