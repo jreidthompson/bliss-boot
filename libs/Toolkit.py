@@ -101,7 +101,7 @@ class Toolkit(object):
 		if result == 0:
 			self.esucc("GRUB 2 Installed Successfully!")
 		elif result != 0:
-			die("Failed to install GRUB 2 into " + drive)
+			self.die("Failed to install GRUB 2 into " + drive)
 
 	# Installs Extlinux
 	def install_extlinux(self, path, drive, dnum, mtype):

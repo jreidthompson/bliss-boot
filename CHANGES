@@ -1,3 +1,7 @@
+0.10.1
+--------------------------------------
+- Fixed minor bug with 'die' function not being found in line 104/Toolkit.py
+
 0.10.0
 --------------------------------------
 - LILO support has been completely removed
