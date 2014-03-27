@@ -26,8 +26,11 @@ class Boot(object):
 		self.manager.set_args(tools)
 
 	def start(self):
-		# Installs the bootloader
-		self.manager.install_bootloader()
+		# Installs the bootloader.. or not
+		if tools.install_bl_flag == 1:
+			self.manager.install_bootloader()
+		else:
+			tools.ewarn("Skipping bootloader installation ...")
 
 		# Create and write the bootloader configuration file
 		self.manager.write_entries()

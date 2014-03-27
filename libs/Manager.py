@@ -30,6 +30,9 @@ class Manager(object):
 		# Checks to see that at least one kernel entry will be written
 		self.check_kernels()
 
+		# Get /boot drive layout
+		self.layout = scanner.detect_layout()
+
 	# Sets the kernel set to be used
 	def set_kernel_list(self, kernels):
 		self.kernels = kernels
@@ -85,21 +88,16 @@ class Manager(object):
 		# What bootloader are we going to install?
 		bootl = self.boot_install
 
-		# Run this so we can set the layout that we need (we dont need the return value atm)
-		scanner.get_bootdrive()
-		layout = scanner.get_layout()
-		bootdr = scanner.get_bootd_root()
-		bootdr_num = scanner.get_bootd_num()
+		# Run this so we can set the layout that we need
+		bootdrive = scanner.get_bootdrive()
 
 		if bootl == 1:
-			tools.install_grub2(bootdr)
+			tools.install_grub2(bootdrive)
 		elif bootl == 2:
-			if bootdr_num != -1:
-				tools.install_extlinux(self.args_el_path, bootdr, bootdr_num, layout)
-			else:
-				tools.ewarn("Unable to get proper boot drive number for setting Legacy BIOS Bootable flag. Skipping bootloader installation ...")
-		else:
-			tools.ewarn("Skipping bootloader installation ...")
+			bootdrive_num = scanner.get_bootdrive_num()
+
+			if bootdrive_num != -1:
+				tools.install_extlinux(self.args_el_path, bootdrive, bootdrive_num, self.layout)
 
 	def write_entries(self):
 		# Set up the output file
@@ -121,7 +119,7 @@ class Manager(object):
 			if conf.bootloader == "grub2":
 				tools.eprint("Generating GRUB 2 configuration ...")
 
-				bootdrive = scanner.get_bootdrive()
+				bootdrive = scanner.get_grub2_bootdrive()
 
 				if os.path.exists(self.output_file):
 					if self.args_force == 1:
@@ -141,11 +139,12 @@ class Manager(object):
 				# or they can let zfs format their drive automatically with
 				# gpt. This amgiguity will be the reason both grub modules will
 				# be inserted.
-				if scanner.get_layout() == "gpt":
+
+				if self.layout == "gpt":
 					dossier.write("insmod part_gpt\n")
-				elif scanner.get_layout() == "msdos":
+				elif self.layout == "msdos":
 					dossier.write("insmod part_msdos\n")
-				elif scanner.get_layout() == "none" or not scanner.get_layout():
+				elif self.layout == "none":
 					dossier.write("insmod part_gpt\n")
 					dossier.write("insmod part_msdos\n")
 

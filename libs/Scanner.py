@@ -20,6 +20,12 @@ class Scanner(object):
 		self.fstab_vals = []
 		self.layout = ""
 
+		# Get the fstab values for /boot immediately
+		self.scan_fstab()
+
+		# Detect the layout of the /boot drive
+		self.detect_layout()
+
 	def find_kernels(self):
 		tools.eprint("Scanning " + conf.bootdir + " ...") 
 
@@ -53,8 +59,6 @@ class Scanner(object):
 
 	# Get fstab information. We will use this to get /boot
 	def scan_fstab(self):
-		tools.eprint("Scanning /etc/fstab for /boot ...")
-
 		r1 = subprocess.Popen(["cat", "/etc/fstab"], stdout=subprocess.PIPE, universal_newlines=True)
 		r2 = subprocess.Popen(["grep", "/boot[[:blank:]]"], stdin=r1.stdout, stdout=subprocess.PIPE, universal_newlines=True)
 		r3 = subprocess.Popen(["awk", "{print $1, $2, $3, $4, $5, $6}"], stdin=r2.stdout, stdout=subprocess.PIPE, universal_newlines=True)
@@ -64,6 +68,9 @@ class Scanner(object):
 		if out:
 			# Split the /boot line so we can store it
 			splits = out[0].split()
+
+			# Clear the list since this function could have been run before
+			self.fstab_vals.clear()
 
 			# Save fstab /boot drive info
 			for x in splits:
@@ -82,7 +89,6 @@ class Scanner(object):
 		# then they could be using mbr as well.. returning 'none' so that
 		# both part_<> can be included
 		if conf.zfs == 1:
-			self.layout = "none"
 			return "none"
 
 		drive = self.fstab_vals[0]
@@ -91,20 +97,7 @@ class Scanner(object):
 		# style of the drive itself
 		match = re.sub("\d$", "", drive)
 
-		# This is the partition number from above, this will be used
-		# to see the Legacy BIOS Bootable flag if the user uses extlinux and it's GPT
-		mnumber = re.search("\d+", drive)
-
-		if mnumber:
-			self.bootdr_num = mnumber.group()
-		else:
-			tools.ewarn("Could not get boot drive number for '" + drive + "'. Your /boot is probably on LVM.")
-			self.bootdr_num = -1
-
 		if match:
-			# Save the drive root since we can use it later to write extlinux .bin
-			self.bootdr = match
-
 			# use blkid /dev/<drive> and get PTTYPE
 			# example: blkid /dev/vda: -> /dev/vda: PTTYPE="gpt"
 			r1 = subprocess.Popen(["blkid", match.strip()], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
@@ -114,21 +107,47 @@ class Scanner(object):
 
 			if out:
 				if out[0].strip() == "gpt":
-					self.layout = "gpt"
+					return "gpt"
 				elif out[0].strip() == "dos":
-					self.layout = "msdos"
+					return "msdos"
 				else:
-					self.layout = "none"
+					return "none"
 			else:
 				# If the layout couldn't be detected then return
 				# none so that both msdos/gpt can be inserted.
 				# This will happen if the user has a raid or lvm
 				# device as their /boot.
-				self.layout = "none"
+				return "none"
+	
+	# Returns only the number of the boot drive
+	def get_bootdrive_num(self):
+		drive = self.fstab_vals[0]
+
+		# This is the partition number which will be used to set the
+		# Legacy BIOS Bootable flag if the user uses extlinux and it's GPT
+		part_num = re.search("\d+", drive)
+
+		if part_num:
+			return part_num.group()
+		else:
+			tools.ewarn("Skipping extlinux bootloader installation since your /boot (" + drive + ") is probably on LVM.")
+			return -1
+
+	# Returns the drive root (i.e /dev/sda)
+	def get_bootdrive(self):
+		drive = self.fstab_vals[0]
+
+		# Remove the partition number so that we can find the drive root
+		match = re.sub("\d$", "", drive)
+
+		if match:
+			return match
+		else:
+			return -1
 
 	# Converts the fstab /boot drive entry to a grub 2 compatible format
 	# and returns it as a string: (gpt) /dev/sda1 -> (hd0,gpt1)
-	def get_bootdrive(self):
+	def get_grub2_bootdrive(self):
 		# If we are using 'whole disk zfs', then we won't have a /boot entry
 		# in /etc/fstab. So instead we will format the zfs_boot variable and
 		# return it ready to be used in grub2
@@ -139,12 +158,6 @@ class Scanner(object):
 				return match.group()
 
 			tools.die("Could not parse the 'zfs_boot' variable correctly.")
-
-		# First let's find the /boot in /etc/fstab
-		self.scan_fstab()
-
-		# Detect the layout of the /boot drive
-		self.detect_layout()
 
 		if self.fstab_vals:
 			drive = self.fstab_vals[0]
@@ -183,7 +196,7 @@ class Scanner(object):
 
 					if nump:
 						# add layout
-						cval = cval + "," + self.get_layout()
+						cval = cval + "," + self.detect_layout()
 
 						# add number part
 						cval = cval + nump.group(0)
@@ -219,10 +232,6 @@ class Scanner(object):
 	def get_kernels(self):
 		self.find_kernels()
 		return self.kernels
-	
-	# Get's the detected layout for the /boot line
-	def get_layout(self):
-		return self.layout
 
 	# Prints a list of detected kernels in the boot directory
 	def print_kernels(self):
@@ -230,11 +239,3 @@ class Scanner(object):
 
 		for i in self.kernels:
 			tools.eprint(i)
-
-	# Get the boot drive's root
-	def get_bootd_root(self):
-		return self.bootdr
-
-	# Get the boot drive's partition number
-	def get_bootd_num(self):
-		return self.bootdr_num

@@ -26,6 +26,7 @@ conf = loader.load_module("conf")
 class Toolkit(object):
 	extlinux = -1
 	grub2 = -1
+	install_bl_flag = 0
 
 	# Checks parameters and running user
 	def welcome(self):
@@ -48,6 +49,7 @@ class Toolkit(object):
 				# Let the program know that we want to install extlinux
 				elif arguments[i] == "-E" or arguments[i] == "--install-extlinux":
 					try:
+						self.install_bl_flag = 1
 						self.extlinux = 1
 
 						# Path to where we want to install Extlinux
@@ -58,6 +60,7 @@ class Toolkit(object):
 
 				# Let the program know that we want to install GRUB 2
 				elif arguments[i] == "-G" or arguments[i] == "--install-grub2":
+					self.install_bl_flag = 1
 					self.grub2 = 1
 
 				# Displays the help/usage message
@@ -256,7 +259,6 @@ class Toolkit(object):
 			return self.args_el_path
 		except AttributeError:
 			return 0
-
 
 	# Returns the bootloader to install if any
 	def get_boot_install(self):
