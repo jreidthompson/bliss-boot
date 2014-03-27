@@ -97,6 +97,9 @@ class Scanner(object):
 
 		if mnumber:
 			self.bootdr_num = mnumber.group()
+		else:
+			tools.ewarn("Could not get boot drive number for '" + drive + "'. Your /boot is probably on LVM.")
+			self.bootdr_num = -1
 
 		if match:
 			# Save the drive root since we can use it later to write extlinux .bin

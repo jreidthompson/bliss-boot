@@ -94,7 +94,10 @@ class Manager(object):
 		if bootl == 1:
 			tools.install_grub2(bootdr)
 		elif bootl == 2:
-			tools.install_extlinux(self.args_el_path, bootdr, bootdr_num, layout)
+			if bootdr_num != -1:
+				tools.install_extlinux(self.args_el_path, bootdr, bootdr_num, layout)
+			else:
+				tools.ewarn("Unable to get proper boot drive number for setting Legacy BIOS Bootable flag. Skipping bootloader installation ...")
 		else:
 			tools.ewarn("Skipping bootloader installation ...")
 

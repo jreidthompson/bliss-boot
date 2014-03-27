@@ -1,3 +1,7 @@
+0.10.2
+--------------------------------------
+- Temporary added some quick fixes to 'get_bootd_num'. This will be rewritten in the future.
+
 0.10.1
 --------------------------------------
 - Fixed minor bug with 'die' function not being found in line 104/Toolkit.py
