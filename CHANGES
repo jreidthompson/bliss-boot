@@ -1,3 +1,11 @@
+0.11.0
+------------
+- Relicensed back to MPL 2.0
+- Fixed a bug where the program wasn't able to detect the hdd type
+- The entire program was rewritten
+- Added the ability to prefix the entries with whatever you want
+- Changed interpreter line to "#!/usr/bin/env python3"
+
 0.10.4
 ------------
 - Relicensed to the more permissive, Apache License 2.0.

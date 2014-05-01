@@ -1,34 +1,34 @@
-"""
-Copyright 2014 Jonathan Vasquez <jvasquez1011@gmail.com>
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at:
-
-	http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-"""
+# Copyright 2014 Jonathan Vasquez <jvasquez1011@gmail.com>
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import os
-import subprocess
 import re
 
 from libs.Toolkit import Toolkit
+from libs.ConfigLoader import ConfigLoader
+
+from subprocess import call
+from subprocess import check_output
 
 tools = Toolkit()
-
-conf = tools.get_conf()
+config = ConfigLoader.get_config()
 
 class Scanner(object):
 	def __init__(self):
-		self.kernels = []
+		self.boot_kernels = []
 		self.fstab_vals = []
 		self.layout = ""
+
+		# Kernels defined by user in configuration file (Example: Gentoo, 3.12.4-KS.01, root=/dev/sda1)
+		self.ck_prefix = []
+		self.ck_version = []
+		self.ck_options = []
+
+		# Factorized Kernels List (The kernels that were found in the bootdir and defined by user in the config)
+		self.common_kernels = []
 
 		# Get the fstab values for /boot immediately
 		self.scan_fstab()
@@ -36,51 +36,42 @@ class Scanner(object):
 		# Detect the layout of the /boot drive
 		self.detect_layout()
 
-	def find_kernels(self):
-		tools.eprint("Scanning " + conf.bootdir + " ...") 
+	# Finds the kernels that the user has in their 'config.bootdir' directory
+	def find_boot_kernels(self):
+		tools.eprint("Scanning " + config.bootdir + " ...") 
 
 		# Check to see if our boot directory exists before starting
-		if not os.path.exists(conf.bootdir):
-			tools.eprint("The " + conf.bootdir + " directory doesn't exist. Creating ...")
+		if not os.path.exists(config.bootdir):
+			tools.eprint("The " + config.bootdir + " directory doesn't exist. Creating ...")
 
-			os.mkdir(conf.bootdir)
+			os.mkdir(config.bootdir)
 
-			if not os.path.exists(conf.bootdir):
-				tools.die(conf.bootdir + " directory doesn't exist")
+			if os.path.exists(config.bootdir):
+				tools.ewarn("Please place your kernels inside " + config.bootdir + "/<version>, configure " + ConfigLoader.get_config_file() + 
+				            ", and then re-run the program. \n\nExample:\n\n" + config.bootdir + "/3.12.12-KS.01/{vmlinuz, initrd}")
+				quit(0)
 			else:
-				tools.esucc("The " + conf.bootdir + " directory has been succesfully created.\n")
+				tools.die(config.bootdir + " directory doesn't exist")
 
-				tools.ewarn("Please place your kernels inside " + conf.bootdir + "/<version>,\nconfigure " +
-				            tools.get_conf_file() + ", and then re-run the program. \n\nExample:\n\n" + conf.bootdir + 
-							"/3.12.12-KS.01/{vmlinuz, initrd}")
-				quit(3)
-
-		results = subprocess.Popen(["ls", conf.bootdir], stdout=subprocess.PIPE, universal_newlines=True)
+		cmd = 'ls ' + config.bootdir
+		results = check_output(["ls", config.bootdir], universal_newlines=True).strip()
 		
-		out = results.stdout.readlines()
-
 		# Add kernels to out kernel set
-		if out:
-			for i in out:
-				self.kernels.append(i.strip())
+		if results:
+			for i in results.split("\n"):
+				self.boot_kernels.append(i)
 		else:
-			tools.die("No kernels found in " + conf.bootdir + ". A directory for\neach kernel you want must exist " +
-					  "in that location.\n\nExample:\n\n" + conf.bootdir + "/3.13.3-KS.01/\n" + conf.bootdir + "/3.12.1-KS.03/\n")
+			tools.die("No kernels found in " + config.bootdir + ". A directory for each kernel you want must exist " +
+					  "in that location.\n\nExample:\n\n" + config.bootdir + "/3.13.5-KS.01/\n" + config.bootdir + "/3.14.1-KS.01/\n")
 
 	# Get fstab information. We will use this to get /boot
 	def scan_fstab(self):
-		r1 = subprocess.Popen(["cat", "/etc/fstab"], stdout=subprocess.PIPE, universal_newlines=True)
-		r2 = subprocess.Popen(["grep", "/boot[[:blank:]]"], stdin=r1.stdout, stdout=subprocess.PIPE, universal_newlines=True)
-		r3 = subprocess.Popen(["awk", "{print $1, $2, $3, $4, $5, $6}"], stdin=r2.stdout, stdout=subprocess.PIPE, universal_newlines=True)
+		cmd = 'cat /etc/fstab | grep /boot[[:blank:]] | awk \'{print $1, $2, $3, $4, $5, $6}\''
+		results = check_output(cmd, shell=True, universal_newlines=True).strip()
 
-		out = r3.stdout.readlines()
-
-		if out:
+		if results:
 			# Split the /boot line so we can store it
-			splits = out[0].split()
-
-			# Clear the list since this function could have been run before
-			self.fstab_vals.clear()
+			splits = results.split(" ")
 
 			# Save fstab /boot drive info
 			for x in splits:
@@ -98,36 +89,35 @@ class Scanner(object):
 		# still using the whole drive for zfs (technically speaking),
 		# then they could be using mbr as well.. returning 'none' so that
 		# both part_<> can be included
-		if conf.zfs == 1:
-			return "none"
+		if config.zfs == 1:
+			self.layout = "none"
+		else:
+			drive = self.fstab_vals[0]
 
-		drive = self.fstab_vals[0]
+			# Remove the partition number so that we can find the
+			# style of the drive itself
+			match = re.sub("\d$", "", drive)
 
-		# Remove the partition number so that we can find the
-		# style of the drive itself
-		match = re.sub("\d$", "", drive)
+			if match:
+				# use blkid /dev/<drive> and get PTTYPE
+				# example: blkid /dev/vda: -> /dev/vda: PTTYPE="gpt"
+				cmd = 'blkid ' + match.strip() + ' | cut -d \'"\' -f 4'
+				results = check_output(cmd, shell=True, universal_newlines=True).strip()
 
-		if match:
-			# use blkid /dev/<drive> and get PTTYPE
-			# example: blkid /dev/vda: -> /dev/vda: PTTYPE="gpt"
-			r1 = subprocess.Popen(["blkid", match.strip()], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-			r2 = subprocess.Popen(["cut", "-d", "\"", "-f", "2"], stdin=r1.stdout, stdout=subprocess.PIPE, universal_newlines=True)
-
-			out = r2.stdout.readlines()
-
-			if out:
-				if out[0].strip() == "gpt":
-					return "gpt"
-				elif out[0].strip() == "dos":
-					return "msdos"
+				if results:
+					if results.strip() == "gpt":
+						self.layout = "gpt"
+					elif results.strip() == "dos":
+						self.layout = "msdos"
+					else:
+						self.layout = "none"
 				else:
-					return "none"
+					# This will run if we get some weird result like "md" from "/dev/md0"
+					self.layout = "none"
 			else:
-				# If the layout couldn't be detected then return
-				# none so that both msdos/gpt can be inserted.
-				# This will happen if the user has a raid or lvm
-				# device as their /boot.
-				return "none"
+				# If the layout couldn't be detected then return none so that both msdos/gpt can be inserted.
+				# This will happen if the user has a raid or lvm device as their /boot.
+				self.layout = "none"
 	
 	# Returns only the number of the boot drive
 	def get_bootdrive_num(self):
@@ -158,11 +148,25 @@ class Scanner(object):
 	# Converts the fstab /boot drive entry to a grub 2 compatible format
 	# and returns it as a string: (gpt) /dev/sda1 -> (hd0,gpt1)
 	def get_grub2_bootdrive(self):
+		"""
+		# If the person wants to use GRUB 2, and we can't detect the layout,
+		# then there is no point in continuing since the set root will be incorrect.
+		if self.layout == "none":
+			tools.die("Unable to detect the partition layout for the /boot drive. GRUB 2 might not support it!\n" +
+			          "If you are sure that GRUB 2 supports this drive layout, and you double checked everything\n" +
+					  "Please submit a bug report with the contents of the following:\n\n" +
+
+					  "- Contents of your 'bootdir'\n" +
+					  "- Contents of /etc/bliss-boot/conf.py\n" +
+					  "- Contents of /etc/fstab)\n" +
+					  "- The result of 'blkid <your /boot drive from fstab>'")
+		"""
+
 		# If we are using 'whole disk zfs', then we won't have a /boot entry
 		# in /etc/fstab. So instead we will format the zfs_boot variable and
 		# return it ready to be used in grub2
-		if conf.zfs == 1:
-			match = re.search('(/[a-zA-Z0-9_/]+)', conf.zfs_boot)
+		if config.zfs == 1:
+			match = re.search('(/[a-zA-Z0-9_/]+)', config.zfs_boot)
 
 			if match:
 				return match.group()
@@ -206,7 +210,7 @@ class Scanner(object):
 
 					if nump:
 						# add layout
-						cval = cval + "," + self.detect_layout()
+						cval = cval + "," + self.layout
 
 						# add number part
 						cval = cval + nump.group(0)
@@ -234,18 +238,82 @@ class Scanner(object):
 				if m1:
 					return "(lvm/" + m1.group(1) + "-" + m1.group(2) + ")"
 
-				# If the auto detection failed, let the user know to
-				# explictly set it
+				# We've failed :(
 				tools.die("Unable to generate the boot drive entry.")
 
 	# Returns the kernel set that was gathered
-	def get_kernels(self):
-		self.find_kernels()
-		return self.kernels
+	def get_boot_kernels(self):
+		return self.boot_kernels
 
 	# Prints a list of detected kernels in the boot directory
-	def print_kernels(self):
-		tools.eprint("Kernels detected in boot directory:")
+	def print_boot_kernels(self):
+		tools.eprint("Kernels detected in the " + config.bootdir + " directory:")
 
-		for i in self.kernels:
+		for i in self.boot_kernels:
 			tools.eprint(i)
+
+	# Finds the kernels that the user defined in their configuration file
+	def find_config_kernels(self):
+		tools.eprint("Scanning " + ConfigLoader.get_config_file() + " ...") 
+
+		for x in config.kernels:
+			self.ck_prefix.append(x[0])
+			self.ck_version.append(x[1])
+			self.ck_options.append(x[2])
+
+	# Prints the kernels detected in the configuration file
+	def print_config_kernels(self):
+		tools.eprint("Kernels detected in " + ConfigLoader.get_config_file() + ":")
+
+		for i in range(len(self.ck_prefix)):
+			print(str(i+1) + ". " + self.ck_prefix[i] + " - " + self.ck_version[i])
+
+	# Factors out the kernels that were defined by the user and found in their bootdir
+	def factor_common_kernels(self):
+		self.common_kernels = self.find_common_kernels(self.boot_kernels, self.ck_version)
+
+	# Find values in common from two lists and return a third list
+	def find_common_kernels(self, list_a, list_b):
+		common_list = []
+
+		for i in range(len(list_a)):
+			for j in range(len(list_b)):
+				if list_a[i] == list_b[j]:
+					value = [ self.ck_prefix[j], self.ck_version[j], self.ck_options[j] ]
+					common_list.append(value)
+
+		return common_list
+
+	# Gets the common kernel list
+	def get_common_kernels(self):
+		return self.common_kernels
+
+	# Prints the kernels found in common
+	def print_common_kernels(self):
+		tools.eprint("Common kernels detected:")
+
+		for k in range(len(self.common_kernels)):
+			print(str(k+1) + ". " + self.common_kernels[k][0] + " - " + self.common_kernels[k][1])
+
+	# Returns the index for target kernel in the common kernel list
+	def search(self, target):
+		for i in range(len(self.common_kernels)):
+			if self.common_kernels[i][1] == target:
+				return i
+
+		return -1
+	
+	# Retrieves the kernel from the common list
+	def get_kernel(self, target):
+		return self.common_kernels[target]
+
+	# Checks to see if any kernels will be added to the configuration file
+	def any_kernels(self):
+		if not self.common_kernels:
+			return -1
+		else:
+			return 0
+
+	# Gets the layout that was detected
+	def get_layout(self):
+		return self.layout

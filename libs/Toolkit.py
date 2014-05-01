@@ -1,18 +1,8 @@
-"""
-Copyright 2014 Jonathan Vasquez <jvasquez1011@gmail.com>
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at:
-
-	http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-"""
+# Copyright 2014 Jonathan Vasquez <jvasquez1011@gmail.com>
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import os
 import sys
@@ -22,16 +12,7 @@ import string
 from subprocess import call
 from subprocess import check_output
 
-from importlib import machinery
-
 from . import other
-
-# Path to config file
-config_loc = "/etc/bliss-boot/conf.py"
-
-# Explictly load the conf file without using the 'get_conf' function
-loader = machinery.SourceFileLoader("conf", config_loc)
-conf = loader.load_module("conf")
 
 class Toolkit(object):
 	extlinux = -1
@@ -86,7 +67,7 @@ class Toolkit(object):
 		self.ewarn("---------------------------")
 		self.ewarn("| " + other.pname + " - v" + other.pversion)
 		self.ewarn("| Author: " + other.pcontact)
-		self.ewarn("| Licensed under the " + other.plicense)
+		self.ewarn("| Distributed under the " + other.plicense)
 		self.ewarn("---------------------------")
 
 	def print_usage(self):
@@ -105,84 +86,6 @@ class Toolkit(object):
 		call(["echo", "-e", "\e[1;31m" + message + "\e[0;m"])
 		quit(5)
 	
-	# Installs GRUB 2
-	def install_grub2(self, drive):
-		self.eprint("Installing GRUB 2 to " + drive + " ...")
-
-		result = call(["grub-install", drive])
-
-		if result == 0:
-			self.esucc("GRUB 2 Installed Successfully!")
-		elif result != 0:
-			self.die("Failed to install GRUB 2 into " + drive)
-
-	# Installs Extlinux
-	def install_extlinux(self, path, drive, dnum, mtype):
-		self.eprint("Installing extlinux to " + path + " and writing firmware to " + drive + " ...")
-
-		# First make the directory to install extlinux in
-		if not os.path.exists(path):
-			os.makedirs(path)
-
-			if not os.path.exists(path):
-				self.die("Unable to create the " + path + " directory ...")
-
-		# Install extlinux to folder
-		result = call(["extlinux", "--install", path])
-
-		if result == 0:
-			self.esucc("Extlinux was installed successfully to " + path + "!")
-		elif result != 0:
-			self.die("Failed to install extlinux into " + path)
-
-		# Copy menu.c32 and libutil.c32
-		el_files = [
-			"/usr/share/syslinux/menu.c32",
-			"/usr/share/syslinux/libutil.c32"
-		]
-
-		for i in el_files:
-			if os.path.isfile(i):
-				shutil.copy(i, path)
-
-				if not os.path.isfile(path + "/" + os.path.basename(i)):
-					self.die("Failed to copy " + os.path.basename(i) + "!") 
-			else:
-				self.die(os.path.basename(i) + " doesn't exist")
-
-		# GPT
-		if mtype == "gpt":
-			firm = "/usr/share/syslinux/gptmbr.bin"
-
-			# Toggle GPT bios bootable flag
-			cmd = "sgdisk " + drive + " --attributes=" + dnum + ":set:2"
-			result = call(cmd, shell=True)
-			
-			if result == 0:
-				self.esucc("Succesfully toggled legacy bios bootable flag!")
-				cmd = "sgdisk " + drive + " --attributes=" + dnum + ":show"
-				result = call(cmd, shell=True)
-			elif result != 0:
-				self.die("Error setting legacy bios bootable flag!")
-		# MBR
-		elif mtype == "msdos":
-			firm = "/usr/share/syslinux/mbr.bin"
-
-		# Write the firmware to the drive
-		if mtype == "gpt" or mtype == "msdos":
-			if os.path.isfile(firm):
-				self.eprint("Writing firmware to " + drive + " ...")
-
-				cmd = "dd bs=440 conv=notrunc count=1 if=" + firm + " of=" + drive
-				result = call(cmd, shell=True)
-
-				if result == 0:
-					self.esucc(os.path.basename(firm) + " was successfully written to " + drive + "!")
-				elif result != 0:
-					self.die("Failed to write extlinux firmware to " + drive + "!")
-		else:
-			self.die("Unable to determine firmware to use for extlinux ...")
-
 	# Get the index for a letter in the alphabet
 	def get_alph_index(self, letter):
 		alphabet = string.ascii_lowercase
@@ -194,17 +97,6 @@ class Toolkit(object):
 				return count
 
 			count = count + 1
-
-	# Find values in common from two lists and return a third list
-	def find_common_kernels(self, list_a, list_b):
-		common_list = []
-
-		for a in list_a:
-			for b in list_b:
-				if a == b:
-					common_list.append(a)
-
-		return common_list
 
 	# Strips the first directory of the path passed. Used to get a good path and not need
 	# a boot symlink in /boot
@@ -238,16 +130,6 @@ class Toolkit(object):
 	# Used for warnings
 	def ewarn(self, x):
 		call(["echo", "-e", "\e[1;33m" + x + "\e[0;m "])
-
-	# Returns the conf.py module
-	def get_conf(self):
-		loader = machinery.SourceFileLoader("conf", config_loc)
-		conf = loader.load_module("conf")
-		return conf
-
-	# Returns the path to the config file
-	def get_conf_file(self):
-		return config_loc
 
 	# Gets desired output path
 	def get_args_output(self):

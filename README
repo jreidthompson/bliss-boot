@@ -1,10 +1,11 @@
-Bliss Boot - 0.10.4
+Bliss Boot - 0.11.0
 Jonathan Vasquez <jvasquez1011@gmail.com>
-Gentoo/Funtoo Linux
+Gentoo Linux
 
-Licensed under the Apache License 2.0 which can be found in the LICENSE file.
+Distributed under the MPL 2.0 which can be found in the LICENSE file.
 
-This program generates a bootloader configuration file.
+This program generates a bootloader configuration file, and lets you automatically install
+the bootloader onto your drive.
 
 Supported bootloaders:
 - GRUB 2
