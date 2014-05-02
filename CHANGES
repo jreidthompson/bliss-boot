@@ -1,7 +1,7 @@
 1.0.0
 ------------
 - Relicensed back to MPL 2.0
-- The entire program was rewritten to have a better OO structure and faster/less redudancy on various parts of the code.
+- The entire program was rewritten to have a better OO structure and faster/less redundancy on various parts of the code.
 - Fixed a bug where the program wasn't able to detect the hdd type
 - Fixed a bug where installing the bootloader would fail
 - Added the ability to prefix the entries with whatever you want
@@ -9,6 +9,7 @@
 - the -E and -G flags to install the extlinux and grub 2 bootloader no longer need parameters.
   -G and -E will both use your /boot entry in /etc/fstab if left blank. If -E has no parameters it
   will install extlinux in /boot/extlinux by default.
+- The '-d' and '--drive' flags have been added. This lets you specify what drive you would like to install your bootloader at.
 - Better error detection/handling
 - Config file has been moved from /etc/bliss-boot/conf.py to /etc/bliss-boot/config.py
 - Moved linux distro dependent paths for applications into the libs/Variables.py file. This should help
