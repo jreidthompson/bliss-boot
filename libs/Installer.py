@@ -7,9 +7,10 @@
 import os
 import shutil
 
+from subprocess import call
 from libs.Toolkit import Toolkit as tools
 
-from subprocess import call
+import libs.Variables as var
 
 class Installer:
 	def __init__(self, drive):
@@ -58,11 +59,11 @@ class Installer:
 
 	# Returns the bootloader to install if any
 	def get_boot_install(self):
-		if self.grub2 == 1 and self.extlinux == 1:
+		if self.grub2 and self.extlinux:
 			tools.die("You cannot install both extlinux and grub2 in the same run!")
-		elif self.grub2 == 1:
+		elif self.grub2:
 			return "grub2"
-		elif self.extlinux == 1:
+		elif self.extlinux:
 			return "extlinux"
 
 	# Installs GRUB 2
@@ -71,9 +72,9 @@ class Installer:
 			tools.eprint("Installing GRUB 2 to " + self.drive + " ...")
 
 			try:
-				result = call(["grub2-install", self.drive])
+				result = call([var.grub2, self.drive])
 
-				if result == 0:
+				if not result:
 					tools.esucc("GRUB 2 Installed Successfully!")
 				else:
 					tools.die("Failed to install GRUB 2 into " + self.drive + " !")
@@ -89,29 +90,26 @@ class Installer:
 
 		# First make the directory to install extlinux in
 		if not os.path.exists(self.path):
-			print("el dir doesnt exist.. creatng")
 			os.makedirs(self.path)
 
 			if not os.path.exists(self.path):
 				tools.die("Unable to create the " + self.path + " directory ...")
 
-			print("el dir created succ")
-
 		# Install extlinux to folder
 		try:
-			result = call(["extlinux", "--install", self.path])
+			result = call([var.extlinux, "--install", self.path])
 		except FileNotFoundError:
 			tools.die("extlinux is not installed! Please install it and try again.")
 
-		if result == 0:
+		if not result:
 			tools.esucc("Extlinux was installed successfully to " + self.path + "!")
-		elif result != 0:
+		else:
 			tools.die("Failed to install extlinux into " + self.path)
 
-		# Copy menu.c32 and libutil.c32
+		# Copy the menu ui the user specified, and libutil.c32
 		el_files = [
-			"/usr/share/syslinux/menu.c32",
-			"/usr/share/syslinux/libutil.c32"
+                        var.el_ui,
+                        var.el_libutil,
 		]
 
 		for i in el_files:
@@ -125,26 +123,26 @@ class Installer:
 
 		# GPT
 		if self.drive_type == "gpt":
-			firm = "/usr/share/syslinux/gptmbr.bin"
+			firm = var.el_gpt_firm
 
 			# Toggle GPT bios bootable flag
-			cmd = "sgdisk " + self.drive + " --attributes=" + self.drive_number + ":set:2"
+			cmd = var.sgdisk + " " + self.drive + " --attributes=" + self.drive_number + ":set:2"
 			result = call(cmd, shell=True)
 			
-			if result == 0:
+			if not result:
 				tools.esucc("Succesfully toggled legacy bios bootable flag!")
-				cmd = "sgdisk " + self.drive + " --attributes=" + self.drive_number + ":show"
+				cmd = var.sgdisk + " " + self.drive + " --attributes=" + self.drive_number + ":show"
 
 				try:
 					result = call(cmd, shell=True)
 				except FileNotfoundError:
 					tools.die("gptfdisk is not installed! Please install it and try again.")
 
-			elif result != 0:
+			else:
 				tools.die("Error setting legacy bios bootable flag!")
 		# MBR
 		elif self.drive_type == "msdos":
-			firm = "/usr/share/syslinux/mbr.bin"
+			firm = var.el_mbr_firm
 
 		# Write the firmware to the drive
 		if self.drive_type == "gpt" or self.drive_type == "msdos":
@@ -154,9 +152,9 @@ class Installer:
 				cmd = "dd bs=440 conv=notrunc count=1 if=" + firm + " of=" + self.drive
 				result = call(cmd, shell=True)
 
-				if result == 0:
+				if not result:
 					tools.esucc(os.path.basename(firm) + " was successfully written to " + self.drive + "!")
-				elif result != 0:
+				else:
 					tools.die("Failed to write extlinux firmware to " + self.drive + "!")
 		else:
 			tools.die("Unable to determine firmware to use for extlinux ...")

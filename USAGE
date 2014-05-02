@@ -22,8 +22,7 @@ directories using just their name. Example:
 /boot/kernels/3.11.2-FN.03/System.map
 /boot/kernels/3.11.2-FN.03/config
 
-4. Open /etc/bliss-boot/conf.py and edit the 'bootloader' line to
-select your bootloader.
+4. Open /etc/bliss-boot/config.py and edit the 'bootloader' line to select your bootloader.
 
 A) Set bootloader to your choice: grub2, extlinux, etc...
 
@@ -34,9 +33,9 @@ C) Change any other options that are applicable to you
 D) Add your kernel to the 'kernels' list and its options. Example:
 
 kernels = (
-	( "Gentoo", "3.11.2-FN.03", "root=tank/gentoo/root quiet"),
-	( "Debian", "3.12.9-KS.01", "root=/dev/sda4 options='ro' quiet"),
-	( "Arch", "3.13.3-KS.01", "root=/dev/mapper/vg-root quiet"),
+	("Gentoo", "3.11.2-FN.03", "root=tank/gentoo/root quiet"),
+	("Debian", "3.12.9-KS.01", "root=/dev/sda4 options='ro' quiet"),
+	("Arch", "3.13.3-KS.01", "root=/dev/mapper/vg-root quiet"),
 )
 
 5. Run 'bliss-boot' and it should automatically detect your kernels
@@ -48,20 +47,29 @@ appropriate location in /boot.
 
 Optional:
 
-To install the GRUB 2 bootloader automatically to your disk (/boot drive in fstab),
-you can use the following command:
+All bootloader installs assume/will do the following:
+
+1. If the '-d' flag is not passed, it will use the /boot drive's entry in /etc/fstab
+2. If installing extlinux and nothing is passed to the '-E' flag, then extlinux will
+   be installed in /boot/extlinux.
+
+To install the GRUB 2 bootloader:
 
 bliss-boot -G
 
-To install extlinux to your disk you can use the following command:
+To install Extlinux:
 
-bliss-boot -E (optional: <path to folder>)
+bliss-boot -E
 
-If you want to specifically tell bliss-boot where to install the bootloader, use the '-d' flag:
+To specify which drive to install the bootloader, you can use the '-d' flag:
 
-bliss-boot -d <drive>
+bliss-boot -d <drive> -G
+bliss-boot -d <drive> -E
 
-If the argument are left blank, bliss-boot will automatically use the /boot entry in your /etc/fstab.
+To specify the folder to install extlinux to:
+
+bliss-boot -E (optional: target folder)
+bliss-boot -E (optional: target folder) -d /dev/sda
 
 If installing extlinux, the program will also detect if your drive is mbr or gpt and write the appropriate
 firmware to the disk. If the drive is also GPT, it will toggle the legacy bios bootable flag.

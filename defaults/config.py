@@ -21,6 +21,10 @@ timeout = 3
 # Default kernel to boot into
 default = "3.12.18-KS.01"
 
+# What do you want your kernel/initrd to be called in the config file?
+kernel_prefix = "vmlinuz"
+initrd_prefix = "initrd"
+
 # If using 'whole disk zfs', dataset where your /boot directory is in
 zfs_boot = "tank/gentoo/root"
 

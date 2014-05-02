@@ -8,19 +8,24 @@ from importlib import machinery
 
 # This class provides static methods to load the configuration file
 class ConfigLoader:
-	# Path to config file
-	config_file = "/etc/bliss-boot/config.py"
+        # Path to config file
+        config_file = "/etc/bliss-boot/config.py"
 
-	# Load the configuration file
-	loader = machinery.SourceFileLoader("config", config_file)
-	config = loader.load_module("config")
+        # Load the configuration file
+        loader = machinery.SourceFileLoader("config", config_file)
 
-	# Returns the configuration file as a module
-	@classmethod
-	def get_config(cls):
-		return cls.config
+        try:
+            config = loader.load_module("config")
+        except FileNotFoundError:
+            print("Your configuration file \"" + config_file + "\" was not found!")
+            quit(1)
 
-	# Returns the path to the configuration file
-	@classmethod
-	def get_config_file(cls):
-		return cls.config_file
+        # Returns the configuration file as a module
+        @classmethod
+        def get_config(cls):
+                return cls.config
+
+        # Returns the path to the configuration file
+        @classmethod
+        def get_config_file(cls):
+                return cls.config_file
