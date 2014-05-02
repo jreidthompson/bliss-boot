@@ -40,7 +40,7 @@ class Installer:
 	# Gets the drive's partition number
 	def get_drive_number(self):
 		return self.drive_number
-	
+
 	# Sets the drive's partition layout (gpt, msdos, etc)
 	def set_drive_type(self, drive_type):
 		self.drive_type = drive_type
@@ -108,8 +108,8 @@ class Installer:
 
 		# Copy the menu ui the user specified, and libutil.c32
 		el_files = [
-                        var.el_ui,
-                        var.el_libutil,
+			var.el_ui,
+			var.el_libutil,
 		]
 
 		for i in el_files:
@@ -117,7 +117,7 @@ class Installer:
 				shutil.copy(i, self.path)
 
 				if not os.path.isfile(self.path + "/" + os.path.basename(i)):
-					tools.die("Failed to copy " + os.path.basename(i) + "!") 
+					tools.die("Failed to copy " + os.path.basename(i) + "!")
 			else:
 				tools.die(os.path.basename(i) + " doesn't exist")
 
@@ -128,7 +128,7 @@ class Installer:
 			# Toggle GPT bios bootable flag
 			cmd = var.sgdisk + " " + self.drive + " --attributes=" + self.drive_number + ":set:2"
 			result = call(cmd, shell=True)
-			
+
 			if not result:
 				tools.esucc("Succesfully toggled legacy bios bootable flag!")
 				cmd = var.sgdisk + " " + self.drive + " --attributes=" + self.drive_number + ":show"

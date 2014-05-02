@@ -16,6 +16,7 @@
   people using non-gentoo distributions to easily be able to port the program over.
 - The user can now pick what names they want their "kernel" and "initrd" to be called in their config.
   (Not just 'vmlinuz' and 'initrd')
+- Indentations have been fixed throughout the whole project (tabs are used)
 
 0.10.4
 ------------
