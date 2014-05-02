@@ -55,7 +55,13 @@ bliss-boot -G
 
 To install extlinux to your disk you can use the following command:
 
-bliss-boot -E <path to folder>
+bliss-boot -E (optional: <path to folder>)
 
-bliss-boot will automatically detect if your drive is mbr or gpt and write the appropriate
-firmware to the disk and if it is GPT, it will also toggle the legacy bios bootable flag.
+If you want to specifically tell bliss-boot where to install the bootloader, use the '-d' flag:
+
+bliss-boot -d <drive>
+
+If the argument are left blank, bliss-boot will automatically use the /boot entry in your /etc/fstab.
+
+If installing extlinux, the program will also detect if your drive is mbr or gpt and write the appropriate
+firmware to the disk. If the drive is also GPT, it will toggle the legacy bios bootable flag.

@@ -6,27 +6,25 @@
 
 import os
 
-from libs.Toolkit import Toolkit
+from libs.Toolkit import Toolkit as tools
 from libs.Scanner import Scanner
+from libs.Installer import Installer
 from libs.ConfigLoader import ConfigLoader
 
-tools = Toolkit()
 scanner = Scanner()
 
 config = ConfigLoader.get_config()
 
-class Manager(object):
+class Manager:
 	def __init__(self):
 		# Find all the kernels in the user's boot directory (config.bootdir)
 		scanner.find_boot_kernels()
 
 		# Find all the kernels that the user configured in their configuration file
 		scanner.find_config_kernels()
-		#scanner.print_config_kernels()
 
 		# Find all the kernels that were found in their boot directory and where a definition was found in their configuration file
 		scanner.factor_common_kernels()
-		#scanner.print_common_kernels()
 
 		# Checks to see that at least one kernel entry will be written
 		result = scanner.any_kernels()
@@ -42,20 +40,13 @@ class Manager(object):
 	def write_entries(self):
 		self.output_file = ""
 
-		# Disabling this since parameters are broken until I finish refactoring the code
+		is_output = tools.is_output()
 
-		"""
-		if self.args_output != -1:
-			self.output_file = self.args_output
-		elif self.args_output == -1 and config.bootloader == "grub2": 
+		if is_output:
+			self.output_file = tools.get_output_file()
+		elif not is_output and config.bootloader == "grub2": 
 			self.output_file = "grub.cfg"
-		elif self.args_output == -1 and config.bootloader == "extlinux":
-			self.output_file = "extlinux.conf"
-		"""
-	
-		if config.bootloader == "grub2":
-			self.output_file = "grub.cfg"
-		elif config.bootloader == "extlinux":
+		elif not is_output and config.bootloader == "extlinux":
 			self.output_file = "extlinux.conf"
 
 		# Check to see what's the bootloader before we start adding
@@ -69,16 +60,13 @@ class Manager(object):
 
 				bootdrive = scanner.get_grub2_bootdrive()
 
-				# Disabling this since parameters are broken until I finish refactoring the code
-				"""
 				if os.path.exists(self.output_file):
-					if self.args_force == 1:
+					if tools.is_force():
 						dossier = open(self.output_file, "w")
 					else:
 						tools.die("Target file: " + self.output_file + " already exists. Pass -f to overwrite.")
 				else:
-				"""
-				dossier = open(self.output_file, "w")
+					dossier = open(self.output_file, "w")
 
 				dossier.write("set timeout=" + str(config.timeout) + "\n")
 				dossier.write("set default=" + str(position) + "\n")
@@ -120,16 +108,14 @@ class Manager(object):
 				tools.eprint("Generating extlinux configuration ...")
 
 				dk_name = scanner.get_kernel(position)[0]
-				# Disabling this since parameters are broken until I finish refactoring the code
-				"""
+
 				if os.path.exists(self.output_file):
-					if self.args_force == 1:
+					if tools.is_force():
 						dossier = open(self.output_file, "w")
 					else:
 						tools.die("Target file: " + self.output_file + " already exists. Pass -f to overwrite.")
 				else:
-				"""
-				dossier = open(self.output_file, "w")
+					dossier = open(self.output_file, "w")
 
 				dossier.write("TIMEOUT " + str(int(config.timeout * 10)) + "\n")
 
@@ -212,3 +198,19 @@ class Manager(object):
 			tools.esucc("'" + self.output_file + "' has been created!")
 		else:
 			tools.die("Either the file couldn't be created or the specified\nbootloader isn't supported.")
+
+	# Triggers bootloader installation
+	def install_bootloader(self):
+		# Set the drive using the /boot entry in /etc/fstab if the user wants 
+		# to install a bootloader but didn't specify the drive themselves as an argument.
+		if not tools.get_bl_drive():
+			installer = Installer(scanner.get_bootdrive())
+		else:
+			installer = Installer(tools.get_bl_drive())
+
+		# Set extlinux specific information before we start
+		if installer.get_bootloader() == "extlinux":
+			installer.set_drive_number(scanner.get_bootdrive_num())
+			installer.set_drive_type(scanner.get_layout())
+
+		installer.start()

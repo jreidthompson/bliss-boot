@@ -1,10 +1,14 @@
 0.11.0
 ------------
 - Relicensed back to MPL 2.0
-- Fixed a bug where the program wasn't able to detect the hdd type
 - The entire program was rewritten
+- Fixed a bug where the program wasn't able to detect the hdd type
 - Added the ability to prefix the entries with whatever you want
 - Changed interpreter line to "#!/usr/bin/env python3"
+- the -E and -G flags to install the extlinux and grub 2 bootloader no longer need parameters.
+  -G and -E will both use your /boot entry in /etc/fstab if left blank. If -E has no parameters it
+  will install extlinux in /boot/extlinux by default.
+- Better error detection
 
 0.10.4
 ------------

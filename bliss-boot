@@ -7,37 +7,24 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from libs.Manager import Manager
-from libs.Toolkit import Toolkit
-
-tools = Toolkit()
-
+from libs.Toolkit import Toolkit as tools
 from libs.ConfigLoader import ConfigLoader
 from libs.Scanner import Scanner
 
-class Boot(object):
+class Boot:
 	def __init__(self):
 		# Print the header information
 		tools.print_info()
 
 		# Gets parameters
-		#tools.welcome()
+		tools.welcome()
 
 		# Sets up the Manager ;) (This is what is going to write our file)
 		self.manager = Manager()
 
-		# Sets the arguments retrieved by the parameters
-		#self.manager.set_args(tools)
-
 	def start(self):
 		self.manager.write_entries()
-		# Installs the bootloader.. or not
-		#if tools.install_bl_flag == 1:
-		#	self.manager.install_bootloader()
-		#else:
-		#	tools.ewarn("Skipping bootloader installation ...")
-
-		# Create and write the bootloader configuration file
-		#self.manager.write_entries()
+		self.manager.install_bootloader()
 
 if __name__ == "__main__":
 	booter = Boot()

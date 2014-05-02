@@ -16,7 +16,7 @@ from subprocess import check_output
 tools = Toolkit()
 config = ConfigLoader.get_config()
 
-class Scanner(object):
+class Scanner:
 	def __init__(self):
 		self.boot_kernels = []
 		self.fstab_vals = []

@@ -5,9 +5,9 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 # Program Information
-pname = "Bliss Boot"
-pauthor = "Jonathan Vasquez"
-pemail = "jvasquez1011@gmail.com"
-pcontact = pauthor + " <" + pemail + ">"
-pversion = "0.11.0"
-plicense = "MPL 2.0"
+name = "Bliss Boot"
+author = "Jonathan Vasquez"
+email = "jvasquez1011@gmail.com"
+contact = author + " <" + email + ">"
+version = "0.11.0"
+license = "MPL 2.0"
