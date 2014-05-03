@@ -141,6 +141,9 @@ class Manager:
 
 		# Add all our desired kernels
 		for kernel in scanner.get_common_kernels():
+			# Get the position so that we can create the labels correctly
+			position = scanner.search(kernel[1])
+
 			tools.esucc("Adding: " + kernel[0] + " - " + kernel[1])
 
 			cs = self.strip_head(config.bootdir)

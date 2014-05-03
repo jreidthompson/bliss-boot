@@ -1,3 +1,7 @@
+1.0.1
+------------
+- Fixed a bug where the default kernel numbers and labels weren't being written with the correct index
+
 1.0.0
 ------------
 - Relicensed back to MPL 2.0

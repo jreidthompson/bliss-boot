@@ -13,7 +13,7 @@ name = "Bliss Boot"
 author = "Jonathan Vasquez"
 email = "jvasquez1011@gmail.com"
 contact = author + " <" + email + ">"
-version = "1.0.0"
+version = "1.0.1"
 license = "MPL 2.0"
 
 # Program Locations
