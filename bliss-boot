@@ -23,7 +23,9 @@ class Boot:
 		self.manager = Manager()
 
 	def start(self):
-		self.manager.write_entries()
+		if not tools.only_bootloader():
+			self.manager.write_entries()
+
 		self.manager.install_bootloader()
 
 if __name__ == "__main__":

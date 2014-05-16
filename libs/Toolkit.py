@@ -20,6 +20,7 @@ class Toolkit:
 	bl_extlinux = 0
 	bl_el_path = "/boot/extlinux"
 	bl_grub2 = 0
+	bl_only = 0
 
 	args_options = (
 		("-o", "--output"),
@@ -27,6 +28,7 @@ class Toolkit:
 		("-d", "--drive"),
 		("-E", "--install-extlinux"),
 		("-G", "--install-grub2"),
+		("-B", "--only-bootloader"),
 		("-h", "--help"),
 	)
 
@@ -90,6 +92,10 @@ class Toolkit:
 				elif arguments[i] == "-h" or arguments[i] == "--help":
 					cls.print_usage()
 
+				# Sets the tasks to do (bootloader|config only, or both)
+				elif arguments[i] == "-B" or arguments[i] == "--only-bootloader":
+					cls.bl_only = 1
+
 	# Prints the header information
 	@classmethod
 	def print_info(cls):
@@ -107,12 +113,13 @@ class Toolkit:
 		print("-o, --output\t\t\tGenerates the configuration file at this location.\n")
 		print("-f, --force\t\t\tOverwrites the file at the target output path.\n")
 		print("-d, --drive\t\t\tSpecifies the target drive to install the bootloader at.\n")
+		print("-B, --only-bootloader\t\tOnly installs the bootloader, doesn't generate the config file.\n")
 		print("-E, --install-extlinux\t\tInstalls extlinux and the MBR to the target path on disk and /boot drive (in fstab).")
 		print("\t\t\t\tExample: bliss-boot -E (optional: target folder) (optional: -d <drive>)\n")
 		print("-G, --install-grub2\t\tInstalls grub 2 to your drive")
 		print("\t\t\t\tExample: bliss-boot -G (optional: -d <drive>)\n")
 		print("-h, --help\t\t\tPrints this help message and then exits.\n")
-		quit(0)
+		quit()
 
 	# Cleanly exit the application
 	@classmethod
@@ -193,4 +200,9 @@ class Toolkit:
 	@classmethod
 	def get_bl_drive(cls):
 		return cls.bl_drive
+
+	# Returns if we are only going to install the bootloader
+	@classmethod
+	def only_bootloader(cls):
+		return cls.bl_only
 

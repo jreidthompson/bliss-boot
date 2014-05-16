@@ -88,7 +88,7 @@ class Installer:
 	def install_extlinux(self):
 		tools.eprint("Installing extlinux to " + self.path + " and writing firmware to " + self.drive + " ...")
 
-		# First make the directory to install extlinux in
+		# Make the directory to install extlinux in
 		if not os.path.exists(self.path):
 			os.makedirs(self.path)
 
@@ -102,7 +102,7 @@ class Installer:
 			tools.die("extlinux is not installed! Please install it and try again.")
 
 		if not result:
-			tools.esucc("Extlinux was installed successfully to " + self.path + "!")
+			tools.esucc("extlinux was installed successfully to " + self.path + "!")
 		else:
 			tools.die("Failed to install extlinux into " + self.path)
 
@@ -130,14 +130,13 @@ class Installer:
 			result = call(cmd, shell=True)
 
 			if not result:
-				tools.esucc("Succesfully toggled legacy bios bootable flag!")
+				tools.esucc("Successfully toggled legacy bios bootable flag!")
 				cmd = var.sgdisk + " " + self.drive + " --attributes=" + self.drive_number + ":show"
 
 				try:
 					result = call(cmd, shell=True)
 				except FileNotfoundError:
 					tools.die("gptfdisk is not installed! Please install it and try again.")
-
 			else:
 				tools.die("Error setting legacy bios bootable flag!")
 		# MBR

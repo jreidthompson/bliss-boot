@@ -13,13 +13,12 @@ name = "Bliss Boot"
 author = "Jonathan Vasquez"
 email = "jvasquez1011@gmail.com"
 contact = author + " <" + email + ">"
-version = "1.0.1"
+version = "1.1.0"
 license = "MPL 2.0"
 
 # Program Locations
 grub2 = "/usr/sbin/grub2-install"
 extlinux = "/sbin/extlinux"
-
 sgdisk = "/usr/sbin/sgdisk"
 
 el_gpt_firm = "/usr/share/syslinux/gptmbr.bin"

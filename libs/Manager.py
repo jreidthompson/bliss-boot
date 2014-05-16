@@ -41,16 +41,25 @@ class Manager:
 
 	# Generates the bootloader configuration
 	def write_entries(self):
-		self.output_file = ""
+		output_file = ""
 
 		is_output = tools.is_output()
 
 		if is_output:
-			self.output_file = tools.get_output_file()
+			output_file = tools.get_output_file()
+
+			# Check to see if the directory for this file exists. If it doesn't
+			# create any directories leading up to the output file so that we don't
+			# get a "FileNotFoundError" later on
+			output_parent = os.path.dirname(output_file)
+
+			if not os.path.exists(output_parent):
+				self.create_output_dir(output_parent)
+
 		elif not is_output and config.bootloader == "grub2":
-			self.output_file = "grub.cfg"
+			output_file = "grub.cfg"
 		elif not is_output and config.bootloader == "extlinux":
-			self.output_file = "extlinux.conf"
+			output_file = "extlinux.conf"
 
 		# Check to see what's the bootloader before we start adding
 		# all the entries, depending the bootloader we can cleanly start
@@ -63,13 +72,13 @@ class Manager:
 
 				bootdrive = scanner.get_grub2_bootdrive()
 
-				if os.path.exists(self.output_file):
+				if os.path.exists(output_file):
 					if tools.is_force():
-						dossier = open(self.output_file, "w")
+						dossier = open(output_file, "w")
 					else:
-						tools.die("Target file: " + self.output_file + " already exists. Pass -f to overwrite.")
+						tools.die("Target file: " + output_file + " already exists. Pass -f to overwrite.")
 				else:
-					dossier = open(self.output_file, "w")
+					dossier = open(output_file, "w")
 
 				dossier.write("set timeout=" + str(config.timeout) + "\n")
 				dossier.write("set default=" + str(position) + "\n")
@@ -113,13 +122,13 @@ class Manager:
 				# Gets the name of the default kernel
 				dk_name = scanner.get_kernel(position)[0]
 
-				if os.path.exists(self.output_file):
+				if os.path.exists(output_file):
 					if tools.is_force():
-						dossier = open(self.output_file, "w")
+						dossier = open(output_file, "w")
 					else:
-						tools.die("Target file: " + self.output_file + " already exists. Pass -f to overwrite.")
+						tools.die("Target file: " + output_file + " already exists. Pass -f to overwrite.")
 				else:
-					dossier = open(self.output_file, "w")
+					dossier = open(output_file, "w")
 
 				dossier.write("TIMEOUT " + str(int(config.timeout * 10)) + "\n")
 
@@ -154,7 +163,7 @@ class Manager:
 			if config.bootloader == "grub2":
 				# Open it in append mode since the header was previously
 				# created before.
-				dossier = open(self.output_file, "a")
+				dossier = open(output_file, "a")
 				dossier.write("menuentry \"" + kernel[0] + " - " + kernel[1] + "\" {\n")
 
 				if config.zfs:
@@ -172,7 +181,7 @@ class Manager:
 				dossier.write("}\n\n")
 				dossier.close()
 			elif config.bootloader == "extlinux":
-				dossier = open(self.output_file, "a")
+				dossier = open(output_file, "a")
 				dossier.write("LABEL " + kernel[0] + str(position) + "\n")
 				dossier.write("\tMENU LABEL " + kernel[0] + " - " + kernel[1] + "\n")
 				dossier.write("\tLINUX " + full_kernel_path + "/" + config.kernel_prefix + "\n")
@@ -189,18 +198,18 @@ class Manager:
 			tools.eprint("Appending additional information ...")
 
 			if config.bootloader == "grub2":
-				dossier = open(self.output_file, "a")
+				dossier = open(output_file, "a")
 				dossier.write(config.append_stuff)
 				dossier.close()
 			elif config.bootloader == "extlinux":
-				dossier = open(self.output_file, "a")
+				dossier = open(output_file, "a")
 				dossier.write(config.append_stuff)
 				dossier.close()
 
 		# Check to make sure that the file was created successfully.
 		# If so let the user know..
-		if os.path.isfile(self.output_file):
-			tools.esucc("'" + self.output_file + "' has been created!")
+		if os.path.isfile(output_file):
+			tools.esucc("'" + output_file + "' has been created!")
 		else:
 			tools.die("Either the file couldn't be created or the specified bootloader isn't supported.")
 
@@ -240,3 +249,11 @@ class Manager:
 				return "/"
 		else:
 			tools.die("The value to strip is empty ...")
+
+	# Creates all the directories needed so that the output file can be written
+	def create_output_dir(self, parent_dir):
+		if not os.path.exists(parent_dir):
+			os.makedirs(parent_dir)
+
+			if not os.path.exists(parent_dir):
+				tools.die("Unable to create the " + parent_dir + " directory ...")

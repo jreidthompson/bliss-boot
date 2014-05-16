@@ -101,7 +101,8 @@ class Scanner:
 			if match:
 				# use blkid /dev/<drive> and get PTTYPE
 				# example: blkid /dev/vda: -> /dev/vda: PTTYPE="gpt"
-				cmd = 'blkid ' + match.strip() + ' | cut -d \'"\' -f 4'
+				# cmd: blkid /dev/sda | grep -oE 'PTTYPE=".*"' | cut -d '"' -f 2
+				cmd = 'blkid ' + match.strip() + ' | grep -oE \'PTTYPE=".*"\' | cut -d \'"\' -f 2'
 				results = check_output(cmd, shell=True, universal_newlines=True).strip()
 
 				if results:

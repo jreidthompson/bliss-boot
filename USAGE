@@ -11,6 +11,7 @@ Example:
 /boot/kernels/3.11.2-FN.03
 /boot/kernels/3.12.9-KS.01
 /boot/kernels/3.13.3-KS.01
+essage and then exits.
 
 3. Place your 'vmlinuz-3.11.2-FN.03' and other kernel files into their
 directories using just their name. Example:
@@ -41,7 +42,8 @@ kernels = (
 5. Run 'bliss-boot' and it should automatically detect your kernels
 and desired options and generate a configuration file for your desire kernel
 in the directory you are currently in. Take this file and put it in the
-appropriate location in /boot.
+appropriate location in /boot.essage and then exits.
+
 
 -----------------
 
@@ -63,7 +65,8 @@ bliss-boot -E
 
 To specify which drive to install the bootloader, you can use the '-d' flag:
 
-bliss-boot -d <drive> -G
+bliss-boot -d <drive> -Gessage and then exits.
+
 bliss-boot -d <drive> -E
 
 To specify the folder to install extlinux to:
@@ -73,3 +76,19 @@ bliss-boot -E (optional: target folder) -d /dev/sda
 
 If installing extlinux, the program will also detect if your drive is mbr or gpt and write the appropriate
 firmware to the disk. If the drive is also GPT, it will toggle the legacy bios bootable flag.
+
+If you just want to install the bootloader and not generate a config file, you can do the following:
+
+bliss-boot -B [(and then bootloader you want, -G or -E)]
+
+Tips:
+
+If you want to install extlinux and generate it's bootloader config in one shot, you can do the following:
+bliss-boot -E -o /boot/extlinux/extlinux.conf
+
+For GRUB 2 it's the other flag..
+bliss-boot -G -o /boot/grub/grub.cfg
+
+This assumes the following:
+1. You want to install extlinux in /boot/extlinux
+2. You already defined your /boot drive in /etc/fstab
