@@ -18,6 +18,10 @@ from libs.Tools import Tools
 from libs.Manager import Manager
 from libs.Scanner import Scanner
 
+import libs.ConfigLoader as ConfigLoader
+
+config = ConfigLoader.GetConfigModule()
+
 # Initialize Scanner
 scanner = Scanner()
 
