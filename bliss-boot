@@ -2,9 +2,17 @@
 
 # Copyright 2014 Jonathan Vasquez <jvasquez1011@gmail.com>
 #
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 from libs.Manager import Manager
 from libs.Toolkit import Toolkit as tools
@@ -12,22 +20,22 @@ from libs.ConfigLoader import ConfigLoader
 from libs.Scanner import Scanner
 
 class Boot:
-	def __init__(self):
-		# Print the header information
-		tools.print_info()
+    def __init__(self):
+        # Print the header information
+        tools.PrintHeader()
 
-		# Gets parameters
-		tools.welcome()
+        # Gets parameters
+        tools.welcome()
 
-		# Sets up the Manager ;) (This is what is going to write our file)
-		self.manager = Manager()
+        # Sets up the Manager ;) (This is what is going to write our file)
+        self.manager = Manager()
 
-	def start(self):
-		if not tools.only_bootloader():
-			self.manager.write_entries()
+    def start(self):
+        if not tools.only_bootloader():
+            self.manager.write_entries()
 
-		self.manager.install_bootloader()
+        self.manager.install_bootloader()
 
 if __name__ == "__main__":
-	booter = Boot()
-	booter.start()
+    booter = Boot()
+    booter.start()

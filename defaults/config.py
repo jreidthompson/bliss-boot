@@ -1,8 +1,16 @@
 # Copyright 2014 Jonathan Vasquez <jvasquez1011@gmail.com>
 #
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 #---------- General Configuration ----------
 
@@ -19,7 +27,7 @@ initrd = 1
 timeout = 3
 
 # Default kernel to boot into
-default = "3.12.18-KS.01"
+default = "3.14.27-KS.01"
 
 # What do you want your kernel/initrd to be called in the config file?
 kernel_prefix = "vmlinuz"
@@ -42,11 +50,11 @@ zfs = 0
 # Adds all the modules specified on the list to the grub config
 # Feel free to specify or remove anything you use/don't use
 goody_bag = [
-	#"lvm",
-	#"luks",
-	#"mdadm",
-	#"mdraid09",
-	#"mdraid1x",
+    #"lvm",
+    #"luks",
+    #"mdadm",
+    #"mdraid09",
+    #"mdraid1x",
 ]
 
 
@@ -66,7 +74,7 @@ el_auto_boot = 0
 
 # ---------- Kernels & Options ----------
 kernels = (
-	('Gentoo', '3.12.18-KS.01', 'root=/dev/sda1 quiet'),
+    ('Gentoo', '3.12.18-KS.01', 'root=/dev/sda1 quiet'),
 )
 
 
@@ -80,9 +88,9 @@ append = 0
 
 append_stuff = \
 """menuentry "Windows 7" {
-	insmod chain
+    insmod chain
 
-	set root='(hd0,msdos2)'
-	chainloader +1
+    set root='(hd0,msdos2)'
+    chainloader +1
 }
 """

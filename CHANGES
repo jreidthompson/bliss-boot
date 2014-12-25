@@ -1,3 +1,9 @@
+2.0.0
+------------
+- The application has been refactored.
+- Relicensed to the Apache License 2.0
+- Supports generating the correct bootloader configuration when using UUID= for the /boot in /etc/fstab
+
 1.1.0
 ------------
 - Fixed a bug where the partition layout for the boot drive wasn't being parsed correctly.
