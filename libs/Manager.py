@@ -156,13 +156,13 @@ class Manager(object):
                 if config.wholeDiskZfs:
                     dossier.write("\tlinux " + bootdrive + "/@" + kernelPath + "/" + kernel[3] + " " + kernel[5] + "\n")
 
-                    if config.initrd:
+                    if config.useInitrd:
                         dossier.write("\tinitrd " + bootdrive + "/@" + kernelPath + "/" + kernel[4] + "\n")
 
                 else:
                     dossier.write("\tlinux " + kernelPath + "/" + kernel[3] + " " + kernel[5] + "\n")
 
-                    if config.initrd:
+                    if config.useInitrd:
                         dossier.write("\tinitrd " + kernelPath + "/" + kernel[4] + "\n")
 
                 dossier.write("}\n\n")
@@ -173,7 +173,7 @@ class Manager(object):
                 dossier.write("\tMENU LABEL " + kernel[0] + " - " + kernel[1] + "\n")
                 dossier.write("\tLINUX " + kernelPath + "/" + kernel[3] + "\n")
 
-                if config.initrd:
+                if config.useInitrd:
                     dossier.write("\tINITRD " + kernelPath + "/" + kernel[4] + "\n")
 
                 dossier.write("\tAPPEND " + kernel[5] + "\n")

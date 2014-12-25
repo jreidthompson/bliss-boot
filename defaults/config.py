@@ -19,7 +19,7 @@
 #          ('Gentoo', '3.12.20-KS.11', 0, 'vmlinuz', 'initrd-3.12.20-KS.11', 'root=/dev/sda1 ro quiet'),
 
 kernels = (
-    ('Gentoo', '3.14.27-KS.01', 1, 'vmlinuz', 'initrd-3.14.27-KS.01', 'root=/dev/sda1 quiet'),
+    ('Gentoo', '3.14.27-KS.01', 1, 'vmlinuz', 'initrd', 'root=/dev/sda1 quiet'),
 )
 
 
