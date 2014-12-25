@@ -16,68 +16,76 @@ import os
 import re
 import string
 
-from libs.Toolkit import Toolkit as tools
-from libs.ConfigLoader import ConfigLoader
-
 from subprocess import call
 from subprocess import check_output
 
-config = ConfigLoader.get_config()
+import libs.ConfigLoader as ConfigLoader
+
+from libs.Tools import Tools
+
+config = ConfigLoader.GetConfigModule()
 
 class Scanner(object):
-    def __init__(self):
-        self.boot_kernels = []
-        self.fstab_vals = []
-        self.layout = ""
+    _bootKernels = []
+    _fstabValues = []
+    _driveLayout = ""
 
-        # Kernels defined by user in configuration file (Example: Gentoo, 3.12.4-KS.01, root=/dev/sda1)
-        self.ck_prefix = []
-        self.ck_version = []
-        self.ck_options = []
+    # Kernels defined by user in configuration file (Example: Gentoo, 3.14.27-KS.01, vmlinuz, initrd, root=/dev/sda1)
+    _configKernelLabel = []
+    _configKernelVersion = []
+    _configKernelDefault = []
+    _configKernelName = []
+    _configKernelInitrdName = []
+    _configKernelOptions = []
 
-        # Factorized Kernels List (The kernels that were found in the bootdir and defined by user in the config)
-        self.common_kernels = []
+    # Factorized Kernels List (The kernels that were found in the 'kernelDirectory' and defined by user in the config)
+    _commonKernels = []
 
+    @classmethod
+    def __init__(cls):
         # Get the fstab values for /boot immediately
-        self.scan_fstab()
+        cls.ScanFstab()
 
         # boot drive
-        self._bootDriveField = self.fstab_vals[0]
-        self._bootDrive = self.ProcessBootDriveField()
+        cls._bootDriveField = cls._fstabValues[0]
+        cls._bootDrive = cls.ProcessBootDriveField()
 
         # Detect the layout of the /boot drive
-        self.detect_layout()
+        cls.DetectDriveLayout()
 
-    # Finds the kernels that the user has in their 'config.bootdir' directory
-    def find_boot_kernels(self):
-        tools.eprint("Scanning " + config.bootdir + " ...")
+    # Finds the kernels that the user has in their 'kernelDirectory'
+    @classmethod
+    def FindBootKernels(cls):
+        Tools.Print("Scanning " + config.kernelDirectory + " ...")
 
         # Check to see if our boot directory exists before starting
-        if not os.path.exists(config.bootdir):
-            tools.eprint("The " + config.bootdir + " directory doesn't exist. Creating ...")
+        if not os.path.exists(config.kernelDirectory):
+            Tools.Print("The " + config.kernelDirectory + " directory doesn't exist. Creating ...")
 
-            os.mkdir(config.bootdir)
+            os.mkdir(config.kernelDirectory)
 
-            if os.path.exists(config.bootdir):
-                tools.ewarn("Please place your kernels inside " + config.bootdir + "/<version>, configure " +
-                ConfigLoader.get_config_file() + ", and then re-run the program. \n\nExample:\n\n" + config.bootdir + "/3.12.12-KS.01/{vmlinuz, initrd}")
+            if os.path.exists(config.kernelDirectory):
+                Tools.Warn("Please place your kernels inside " + config.kernelDirectory + "/<version>, configure " +
+                    ConfigLoader.GetConfigFilePath() + ", and then re-run the program. \n\nExample:\n\n" +
+                    config.kernelDirectory + "/3.12.12-KS.01/{vmlinuz, initrd}")
                 quit(1)
             else:
-                tools.die(config.bootdir + " directory doesn't exist")
+                Tools.Fail(config.kernelDirectory + " directory doesn't exist")
 
-        cmd = 'ls ' + config.bootdir
-        results = check_output(["ls", config.bootdir], universal_newlines=True).strip()
+        cmd = 'ls ' + config.kernelDirectory
+        results = check_output(["ls", config.kernelDirectory], universal_newlines=True).strip()
 
         # Add kernels to out kernel set
         if results:
             for i in results.split("\n"):
-                self.boot_kernels.append(i)
+                cls._bootKernels.append(i)
         else:
-            tools.die("No kernels found in " + config.bootdir + ". A directory for each kernel you want must exist " +
-            "in that location.\n\nExample:\n\n" + config.bootdir + "/3.13.5-KS.01/\n" + config.bootdir + "/3.14.1-KS.01/\n")
+            Tools.Fail("No kernels found in " + config.kernelDirectory + ". A directory for each kernel you want must exist " +
+            "in that location.\n\nExample:\n\n" + config.kernelDirectory + "/3.13.5-KS.01/\n" + config.kernelDirectory + "/3.14.27-KS.01/\n")
 
     # Get fstab information. We will use this to get /boot
-    def scan_fstab(self):
+    @classmethod
+    def ScanFstab(cls):
         cmd = 'cat /etc/fstab | grep /boot[[:blank:]] | awk \'{print $1, $2, $3, $4, $5, $6}\''
         results = check_output(cmd, shell=True, universal_newlines=True).strip()
 
@@ -87,13 +95,13 @@ class Scanner(object):
 
             # Save fstab /boot drive info
             for x in splits:
-                self.fstab_vals.append(x.strip())
+                cls._fstabValues.append(x.strip())
         else:
-            tools.die("/boot line could not be found in /etc/fstab")
+            Tools.Fail("/boot line could not be found in /etc/fstab")
 
-    # Detect the partition style for the /boot drive (gpt or mbr)
-    # and returns either "gpt" or "msdos" as a string
-    def detect_layout(self):
+    # Detect the partition style for the /boot drive (gpt or mbr) and returns either "gpt" or "msdos" as a string
+    @classmethod
+    def DetectDriveLayout(cls):
         # If we are using 'whole disk zfs', we know for a fact that
         # it's gpt (assuming the drive was formatted with zpool create).
 
@@ -101,12 +109,12 @@ class Scanner(object):
         # still using the whole drive for zfs (technically speaking),
         # then they could be using mbr as well.. returning 'none' so that
         # both part_<> can be included
-        if config.zfs:
-            self.layout = "none"
+        if config.wholeDiskZfs:
+            cls._driveLayout = "none"
         else:
             # Remove the partition number so that we can find the
             # style of the drive itself
-            match = re.sub("\d$", "", self._bootDrive)
+            match = re.sub("\d$", "", cls._bootDrive)
 
             if match:
                 # use blkid /dev/<drive> and get PTTYPE
@@ -116,61 +124,64 @@ class Scanner(object):
                 results = check_output(cmd, shell=True, universal_newlines=True).strip()
 
                 if results:
-                    if results.strip() == "gpt":
-                        self.layout = "gpt"
-                    elif results.strip() == "dos":
-                        self.layout = "msdos"
+                    if results == "gpt":
+                        cls._driveLayout = "gpt"
+                    elif results == "dos":
+                        cls._driveLayout = "msdos"
                     else:
-                        self.layout = "none"
+                        cls._driveLayout = "none"
                 else:
                     # This will run if we get some weird result like "md" from "/dev/md0"
-                    self.layout = "none"
+                    cls._driveLayout = "none"
             else:
                 # If the layout couldn't be detected then return none so that both msdos/gpt can be inserted.
                 # This will happen if the user has a raid or lvm device as their /boot.
-                self.layout = "none"
+                cls._driveLayout = "none"
 
     # Returns only the number of the boot drive
-    def get_bootdrive_num(self):
+    @classmethod
+    def GetBootDriveNumber(cls):
         # This is the partition number which will be used to set the
         # Legacy BIOS Bootable flag if the user uses extlinux and it's GPT
-        part_num = re.search("\d+", self._bootDrive)
+        partitionNumber = re.search("\d+", cls._bootDrive)
 
-        if part_num:
-            return part_num.group()
-        else:
-            tools.ewarn("Skipping extlinux bootloader installation since your /boot (" + self._bootDrive + ") is probably on LVM.")
-            return -1
+        if partitionNumber:
+            return partitionNumber.group()
+
+        Tools.Warn("Skipping extlinux bootloader installation since your /boot (" + cls._bootDrive + ") is probably on LVM.")
+        return -1
 
     # Returns the drive root (i.e /dev/sda)
-    def get_bootdrive(self):
+    @classmethod
+    def GetBootDrive(cls):
         # Remove the partition number so that we can find the drive root
-        match = re.sub("\d$", "", self._bootDrive)
+        match = re.sub("\d$", "", cls._bootDrive)
 
         if match:
             return match
-        else:
-            return -1
+
+        return -1
 
     # Converts the fstab /boot drive entry to a grub 2 compatible format
     # and returns it as a string: (gpt) /dev/sda1 -> (hd0,gpt1)
-    def get_grub2_bootdrive(self):
+    @classmethod
+    def GetGrub2BootDrive(cls):
         # If we are using 'whole disk zfs', then we won't have a /boot entry
         # in /etc/fstab. So instead we will format the zfs_boot variable and
         # return it ready to be used in grub2
-        if config.zfs:
-            match = re.search('(/[a-zA-Z0-9_/]+)', config.zfs_boot)
+        if config.wholeDiskZfs:
+            match = re.search('(/[a-zA-Z0-9_/]+)', config.wholeDiskZfsBootPool)
 
             if match:
                 return match.group()
 
-            tools.die("Could not parse the 'zfs_boot' variable correctly.")
+            Tools.Fail("Could not parse the 'wholeDiskZfsBootPool' variable correctly.")
 
         # Properly processes the boot drive field in order for us to get
         # a value that we can properly parse for the grub.cfg.
         # This is so that if the user is using UUIDs as a /boot entry in
         # /etc/fstab, we can handle that situation correctly.
-        match = re.search('/dev/(.*)', self._bootDrive)
+        match = re.search('/dev/(.*)', cls._bootDrive)
 
         if match:
             # Possibilities:
@@ -185,33 +196,32 @@ class Scanner(object):
 
             if m1:
                 # Complete value, will be completed as function progresses
-                cval = "(hd"
+                completedValue = "(hd"
 
-                # Process the letter part and convert it to a grub
-                # compatible format; a = (hd0)
+                # Process the letter part and convert it to a grub compatible format; a = (hd0)
                 alph = re.search('\w', m1.group(1))
 
                 if alph:
                     # Find the number in the alphabet of this letter
-                    alphindex = self.get_alph_index(alph.group(0))
+                    alphindex = cls.GetAlphabeticalIndex(alph.group(0))
 
                     # Add this number to the final string
-                    cval = cval + str(alphindex)
+                    completedValue = completedValue + str(alphindex)
 
                 # Process the number part of the drive
-                nump = re.search('\d', m1.group(1))
+                numberPartOfDrive = re.search('\d', m1.group(1))
 
-                if nump:
+                if numberPartOfDrive:
                     # add layout
-                    cval = cval + "," + self.layout
+                    completedValue = completedValue + "," + cls._driveLayout
 
                     # add number part
-                    cval = cval + nump.group(0)
+                    completedValue = completedValue + numberPartOfDrive.group(0)
 
                 # close the value and return it
-                cval = cval + ")"
+                completedValue = completedValue + ")"
 
-                return cval
+                return completedValue
 
             # --- Handle md# ---
             m1 = re.search('md(\d+)', match.group(1))
@@ -232,118 +242,30 @@ class Scanner(object):
                 return "(lvm/" + m1.group(1) + "-" + m1.group(2) + ")"
 
             # We've failed :(
-            tools.die("Unable to generate the boot drive entry.")
+            Tools.Fail("Unable to generate the boot drive entry.")
 
     # Processes the boot drive field, taking into account things like UUID=
     # instead of the traditional /dev/sda, /dev/md0 references
-    def ProcessBootDriveField(self):
-        splitResults = self._bootDriveField.split("=")
+    @classmethod
+    def ProcessBootDriveField(cls):
+        splitResults = cls._bootDriveField.split("=")
 
         targetDrive = ""
 
         for i in range(len(splitResults)):
             if splitResults[i] == "UUID":
-                targetDrive = self.GetDriveFromIdentifier("UUID", splitResults[i+1])
+                targetDrive = cls.GetDriveFromIdentifier("UUID", splitResults[i+1])
                 break
             elif splitResults[i] == "PARTUUID":
-                targetDrive = self.GetDriveFromIdentifier("PARTUUID", splitResults[i+1])
+                targetDrive = cls.GetDriveFromIdentifier("PARTUUID", splitResults[i+1])
                 break
 
         # If we aren't using anything fancy like UUID=, then the
         # boot drive field and the split results will be the same
-        if self._bootDriveField == ''.join(splitResults):
-            targetDrive = self._bootDriveField
+        if cls._bootDriveField == ''.join(splitResults):
+            targetDrive = cls._bootDriveField
 
         return targetDrive
-
-    # Returns the kernel set that was gathered
-    def get_boot_kernels(self):
-        return self.boot_kernels
-
-    # Prints a list of detected kernels in the boot directory
-    def print_boot_kernels(self):
-        tools.eprint("Kernels detected in the " + config.bootdir + " directory:")
-
-        for i in self.boot_kernels:
-            tools.eprint(i)
-
-    # Finds the kernels that the user defined in their configuration file
-    def find_config_kernels(self):
-        tools.eprint("Scanning " + ConfigLoader.get_config_file() + " ...")
-
-        for x in config.kernels:
-            self.ck_prefix.append(x[0])
-            self.ck_version.append(x[1])
-            self.ck_options.append(x[2])
-
-    # Prints the kernels detected in the configuration file
-    def print_config_kernels(self):
-        tools.eprint("Kernels detected in " + ConfigLoader.get_config_file() + ":")
-
-        for i in range(len(self.ck_prefix)):
-            print(str(i+1) + ". " + self.ck_prefix[i] + " - " + self.ck_version[i])
-
-    # Factors out the kernels that were defined by the user and found in their bootdir
-    def factor_common_kernels(self):
-        self.common_kernels = self.find_common_kernels(self.boot_kernels, self.ck_version)
-
-    # Find values in common from two lists and return a third list
-    def find_common_kernels(self, list_a, list_b):
-        common_list = []
-
-        for i in range(len(list_a)):
-            for j in range(len(list_b)):
-                if list_a[i] == list_b[j]:
-                    value = [ self.ck_prefix[j], self.ck_version[j], self.ck_options[j] ]
-                    common_list.append(value)
-
-        return common_list
-
-    # Gets the common kernel list
-    def get_common_kernels(self):
-        return self.common_kernels
-
-    # Prints the kernels found in common
-    def print_common_kernels(self):
-        tools.eprint("Common kernels detected:")
-
-        for k in range(len(self.common_kernels)):
-            print(str(k+1) + ". " + self.common_kernels[k][0] + " - " + self.common_kernels[k][1])
-
-    # Returns the index for target kernel in the common kernel list
-    def search(self, target):
-        for i in range(len(self.common_kernels)):
-            if self.common_kernels[i][1] == target:
-                return i
-
-        return -1
-
-    # Retrieves the kernel from the common list
-    def get_kernel(self, target):
-        return self.common_kernels[target]
-
-    # Checks to see if any kernels will be added to the configuration file
-    def any_kernels(self):
-        if not self.common_kernels:
-            return -1
-        else:
-            return 0
-
-    # Gets the layout that was detected
-    def get_layout(self):
-        return self.layout
-
-    # Get the index for a letter in the alphabet
-    def get_alph_index(self, letter):
-        alphabet = string.ascii_lowercase
-
-        count = 0
-
-        for let in alphabet:
-            if let == letter:
-                return count
-
-            count = count + 1
 
     # Returns the drive matching this identifier
     @classmethod
@@ -354,4 +276,127 @@ class Scanner(object):
         if results:
             return results
         else:
-            tools.die("No drives were found with the " + vIdValue + " value.")
+            Tools.Fail("No drives were found with the " + vIdValue + " value.")
+
+    # Returns the kernel set that was gathered
+    @classmethod
+    def GetBootKernels(cls):
+        return cls._bootKernels
+
+    # Prints a list of detected kernels in the boot directory
+    @classmethod
+    def PrintBootKernels(cls):
+        Tools.Print("Kernels detected in the " + config.kernelDirectory + " directory:")
+
+        for kernel in cls._bootKernels:
+            Tools.Print(kernel)
+
+    # Finds the kernels that the user defined in their configuration file
+    @classmethod
+    def FindKernelsInConfig(cls):
+        Tools.Print("Scanning " + ConfigLoader.GetConfigFilePath() + " ...")
+
+        for kernel in config.kernels:
+            cls._configKernelLabel.append(kernel[0])
+            cls._configKernelVersion.append(kernel[1])
+            cls._configKernelDefault.append(kernel[2])
+            cls._configKernelName.append(kernel[3])
+            cls._configKernelInitrdName.append(kernel[4])
+            cls._configKernelOptions.append(kernel[5])
+
+    # Prints the kernels detected in the configuration file
+    @classmethod
+    def PrintKernelsInConfig(cls):
+        Tools.Print("Kernels detected in " + ConfigLoader.GetConfigFilePath() + ":")
+
+        for i in range(len(cls._configKernelLabel)):
+            print(str(i+1) + ". " + cls._configKernelLabel[i] + " - " + cls._configKernelVersion[i])
+
+    # Factors out the kernels that were defined by the user and found in their kernelDirectory
+    @classmethod
+    def FindCommonKernels(cls):
+         for i in range(len(cls._bootKernels)):
+            for j in range(len(cls._configKernelVersion)):
+                if cls._bootKernels[i] == cls._configKernelVersion[j]:
+                    value = [
+                        cls._configKernelLabel[j],
+                        cls._configKernelVersion[j],
+                        cls._configKernelDefault[j],
+                        cls._configKernelName[j],
+                        cls._configKernelInitrdName[j],
+                        cls._configKernelOptions[j],
+                    ]
+                    cls._commonKernels.append(value)
+
+    # Finds the default kernel
+    @classmethod
+    def FindDefaultKernel(cls):
+        alreadyFound = 0
+        defaultKernelIndex = 0
+
+        for i in range(len(cls._commonKernels)):
+            if cls._commonKernels[i][2] == 1:
+                if alreadyFound == 0:
+                    alreadyFound = 1
+                    defaultKernelIndex = i
+                else:
+                    Tools.Warn("Multiple default kernels detected. The default kernel will most likely not be correct!")
+                    return defaultKernelIndex
+
+        if alreadyFound != 0:
+            return defaultKernelIndex
+        else:
+            return -1
+
+    # Gets the common kernel list
+    @classmethod
+    def GetCommonKernels(cls):
+        return cls._commonKernels
+
+    # Prints the kernels found in common
+    @classmethod
+    def PrintCommonKernels(cls):
+        Tools.Print("Common kernels detected:")
+
+        for kernel in range(len(cls._commonKernels)):
+            print(str(kernel+1) + ". " + cls._commonKernels[kernel][0] + " - " + cls._commonKernels[kernel][1])
+
+    # Returns the index for target kernel in the common kernel list
+    @classmethod
+    def GetKernelIndexInCommonList(cls, vTarget):
+        for i in range(len(cls._commonKernels)):
+            if cls._commonKernels[i] == vTarget:
+                return i
+
+        return -1
+
+    # Retrieves the kernel from the common list
+    @classmethod
+    def GetKernel(cls, vTarget):
+        return cls._commonKernels[vTarget]
+
+    # Checks to see if any kernels will be added to the configuration file
+    @classmethod
+    def AnyKernelsExist(cls):
+        if not cls._commonKernels:
+            return -1
+        else:
+            return 0
+
+    # Gets the layout that was detected
+    @classmethod
+    def GetDriveLayout(cls):
+        return cls._driveLayout
+
+    # Get the index for a letter in the alphabet
+    @classmethod
+    def GetAlphabeticalIndex(cls, vLetter):
+        alphabet = string.ascii_lowercase
+
+        count = 0
+
+        for letter in alphabet:
+            if letter == vLetter:
+                return count
+
+            count = count + 1

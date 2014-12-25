@@ -12,29 +12,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# ---------- Kernels & Options ----------
+# Label, Version, 1 = Default Kernel (others are 0), Name of Kernel, Name of Initrd, Kernel Options
+# Example:
+#          ('Gentoo', '3.14.27-KS.01', 1, 'vmlinuz', 'initrd', 'root=/dev/sda1 quiet'),
+#          ('Gentoo', '3.12.20-KS.11', 0, 'vmlinuz', 'initrd-3.12.20-KS.11', 'root=/dev/sda1 ro quiet'),
+
+kernels = (
+    ('Gentoo', '3.14.27-KS.01', 1, 'vmlinuz', 'initrd-3.14.27-KS.01', 'root=/dev/sda1 quiet'),
+)
+
+
 #---------- General Configuration ----------
 
-# Kernel Path and Bootloader Type
-bootdir = "/boot/kernels"
+# Kernel Path
+kernelDirectory = "/boot/kernels"
 
-# Supported bootloaders: grub2, extlinux
+# Bootloader Type: Supported: [grub2, extlinux]
 bootloader = "grub2"
 
 # Is an initrd being used?
-initrd = 1
+useInitrd = 1
 
 # 'timeout' is automatically multiplied by 10 for extlinux
 timeout = 3
 
-# Default kernel to boot into
-default = "3.14.27-KS.01"
-
-# What do you want your kernel/initrd to be called in the config file?
-kernel_prefix = "vmlinuz"
-initrd_prefix = "initrd"
-
 # If using 'whole disk zfs', dataset where your /boot directory is in
-zfs_boot = "tank/gentoo/root"
+wholeDiskZfsBootPool = "tank/gentoo/root"
 
 
 #---------- GRUB 2 settings ----------
@@ -45,11 +49,11 @@ efi = 0
 
 # Only activate this if you are using 'whole disk zfs'
 # aka no /boot, and your /boot directory is inside the zfs pool
-zfs = 0
+wholeDiskZfs = 0
 
 # Adds all the modules specified on the list to the grub config
 # Feel free to specify or remove anything you use/don't use
-goody_bag = [
+goodyBag = [
     #"lvm",
     #"luks",
     #"mdadm",
@@ -59,23 +63,17 @@ goody_bag = [
 
 
 #---------- extlinux settings ----------
-el_ui = "menu.c32"
-el_m_title = "Boot Menu"
-el_c_title = "1;37;40"
-el_c_border = "30;40"
-el_c_unsel = "37;40"
+extlinuxUi = "menu.c32"
+extlinuxMenuTitle = "Boot Menu"
+extlinuxTitleColor = "1;37;40"
+extlinuxBorderColor = "30;40"
+extlinuxUnselectedColor = "37;40"
 
 # If you enable this, it will disable the menu and automatically
 # boot your chosen default kernel. Leaving this at 0 will still boot
 # automatically but it will first show the menu, wait the timeout value
 # that you set above, and then boot the default kernel
-el_auto_boot = 0
-
-
-# ---------- Kernels & Options ----------
-kernels = (
-    ('Gentoo', '3.12.18-KS.01', 'root=/dev/sda1 quiet'),
-)
+extlinuxAutoBoot = 0
 
 
 # ---------- Other ----------
@@ -86,7 +84,7 @@ kernels = (
 
 append = 0
 
-append_stuff = \
+appendStuff = \
 """menuentry "Windows 7" {
     insmod chain
 

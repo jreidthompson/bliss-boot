@@ -21,16 +21,16 @@ from subprocess import check_output
 import libs.Variables as var
 
 # Provides basic utilities that can be used by any class (Colorized printing, parameter retrieval, etc)
-class Toolkit(object):
-    args_force = 0
-    args_output = ""
-    bl_drive = ""
-    bl_extlinux = 0
-    bl_el_path = "/boot/extlinux"
-    bl_grub2 = 0
-    bl_only = 0
+class Tools(object):
+    _force = 0
+    _outputFile = ""
+    _bootloaderDrive = ""
+    _useGrub2 = 0
+    _useExtlinux = 0
+    _extlinuxBootDirPath = "/boot/extlinux"
+    _onlyBootloader = 0
 
-    args_options = (
+    _options = (
         ("-o", "--output"),
         ("-f", "--force"),
         ("-d", "--drive"),
@@ -42,21 +42,21 @@ class Toolkit(object):
 
     # Checks to see if a parameter is a valid flag
     @classmethod
-    def is_flag(cls, candidate):
-        for i in range(len(cls.args_options)):
-            for j in range(len(cls.args_options[i])):
-                if cls.args_options[i][j] == candidate:
+    def IsFlag(cls, vParam):
+        for i in range(len(cls._options)):
+            for j in range(len(cls._options[i])):
+                if cls._options[i][j] == vParam:
                         return 0
 
         return -1
 
     # Checks parameters and running user
     @classmethod
-    def welcome(cls):
+    def ProcessArguments(cls):
         user = check_output(["whoami"], universal_newlines=True).strip()
 
         if user != "root":
-            cls.die("This program must be ran as root")
+            cls.Fail("This program must be ran as root")
 
         arguments = sys.argv[1:]
 
@@ -65,44 +65,44 @@ class Toolkit(object):
                 # Sets the output file to write the config to
                 if arguments[i] == "-o" or arguments[i] == "--output":
                     try:
-                        if cls.is_flag(arguments[i+1]) != 0:
-                            cls.args_output = arguments[i+1]
+                        if cls.IsFlag(arguments[i+1]) != 0:
+                            cls._outputFile = arguments[i+1]
                     except IndexError:
-                        cls.die("You need to pass a path to output the file!")
+                        cls.Fail("You need to pass a path to output the file!")
 
                 # Set 'force' in order to overwrite output file target
                 elif arguments[i] == "-f" or arguments[i] == "--force":
-                    cls.args_force = 1
+                    cls._force = 1
 
                 # Set the drive where we want to install the bootloader
                 elif arguments[i] == "-d" or arguments[i] == "--drive":
                     try:
-                        if cls.is_flag(arguments[i+1]) != 0:
-                            cls.bl_drive = arguments[i+1]
+                        if cls.IsFlag(arguments[i+1]) != 0:
+                            cls._bootloaderDrive = arguments[i+1]
                     except IndexError:
                         pass
 
                 # Let the program know that we want to install extlinux
                 elif arguments[i] == "-E" or arguments[i] == "--install-extlinux":
-                    cls.bl_extlinux = 1
+                    cls._useExtlinux = 1
 
                     try:
-                        if cls.is_flag(arguments[i+1]) != 0:
-                            cls.bl_el_path = arguments[i+1]
+                        if cls.IsFlag(arguments[i+1]) != 0:
+                            cls._extlinuxBootDirPath = arguments[i+1]
                     except IndexError:
                         pass
 
                 # Let the program know that we want to install GRUB 2
                 elif arguments[i] == "-G" or arguments[i] == "--install-grub2":
-                    cls.bl_grub2 = 1
+                    cls._useGrub2 = 1
 
                 # Displays the help/usage message
                 elif arguments[i] == "-h" or arguments[i] == "--help":
-                    cls.print_usage()
+                    cls.PrintUsage()
 
                 # Sets the tasks to do (bootloader|config only, or both)
                 elif arguments[i] == "-B" or arguments[i] == "--only-bootloader":
-                    cls.bl_only = 1
+                    cls._onlyBootloader = 1
 
     # Prints the header of the application
     @classmethod
@@ -114,8 +114,8 @@ class Toolkit(object):
         cls.Print(cls.Colorize("yellow", "----------------------------------") + "\n")
 
     # Prints the usage information
-    @staticmethod
-    def print_usage():
+    @classmethod
+    def PrintUsage(cls):
         print("Usage: bliss-boot [OPTION]\n")
         print("-o, --output\t\t\tGenerates the configuration file at this location.\n")
         print("-f, --force\t\t\tOverwrites the file at the target output path.\n")
@@ -130,8 +130,8 @@ class Toolkit(object):
 
     # Cleanly exit the application
     @classmethod
-    def die(cls, message):
-        call(["echo", "-e", cls.colorize("red", message)])
+    def Fail(cls, vMessage):
+        call(["echo", "-e", cls.Colorize("red", vMessage)])
         quit(1)
 
      # Returns the string with a color to be used in bash
@@ -154,69 +154,63 @@ class Toolkit(object):
 
     # Prints a message
     @classmethod
-    def eprint(cls, message):
-        call(["echo", "-e", cls.Colorize("cyan", message)])
-
-    # Prints a message
-    @classmethod
-    def Print(cls, message):
-        call(["echo", "-e", cls.Colorize("cyan", message)])
+    def Print(cls, vMessage):
+        call(["echo", "-e", cls.Colorize("cyan", vMessage)])
 
     # Used for successful entries
     @classmethod
-    def esucc(cls, message):
-        call(["echo", "-e", cls.Colorize("green", message)])
+    def Success(cls, vMessage):
+        call(["echo", "-e", cls.Colorize("green", vMessage)])
 
     # Used for warnings
     @classmethod
-    def ewarn(cls, message):
-        call(["echo", "-e", cls.Colorize("yellow", message)])
+    def Warn(cls, vMessage):
+        call(["echo", "-e", cls.Colorize("yellow", vMessage)])
 
     # Returns the value of whether or not GRUB 2 will be installed
     @classmethod
-    def is_grub2(cls):
-        return cls.bl_grub2
+    def IsGrub2(cls):
+        return cls._useGrub2
 
     # Returns the value of whether or not extlinux will be installed
     @classmethod
-    def is_extlinux(cls):
-        return cls.bl_extlinux
+    def IsExtlinux(cls):
+        return cls._useExtlinux
 
     # Returns a positive number if an output option was set
     @classmethod
-    def is_output(cls):
-        if cls.args_output:
+    def IsOutputSet(cls):
+        if cls._outputFile:
             return 1
 
         return 0
 
     # Gets the desired output path
     @classmethod
-    def get_output_file(cls):
-        return cls.args_output
+    def GetOutputFile(cls):
+        return cls._outputFile
 
     # Returns the value of whether or not we will overwrite the output file if it exists.
     @classmethod
-    def is_force(cls):
-        return cls.args_force
+    def IsForceSet(cls):
+        return cls._force
 
-    # Returns extlinux variables
+    # Returns directory where extlinux installs its files
     @classmethod
-    def get_el_path(cls):
-        return cls.bl_el_path
+    def GetExtlinuxBootDirPath(cls):
+        return cls._extlinuxBootDirPath
 
     # Sets the bootloader drive
     @classmethod
-    def set_bl_drive(cls, drive):
-        cls.bl_drive = drive
+    def SetBootloaderDrive(cls, vDrive):
+        cls._bootloaderDrive = vDrive
 
     # Returns the bootloader drive
     @classmethod
-    def get_bl_drive(cls):
-        return cls.bl_drive
+    def GetBootloaderDrive(cls):
+        return cls._bootloaderDrive
 
     # Returns if we are only going to install the bootloader
     @classmethod
-    def only_bootloader(cls):
-        return cls.bl_only
-
+    def OnlyInstallBootloader(cls):
+        return cls._onlyBootloader

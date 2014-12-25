@@ -14,26 +14,24 @@
 
 from importlib import machinery
 
-# This class provides static methods to load the configuration file
-class ConfigLoader(object):
-    # Path to config file
-    config_file = "/etc/bliss-boot/config.py"
+# This module provides static methods to load the configuration file
 
-    # Load the configuration file
-    loader = machinery.SourceFileLoader("config", config_file)
+# Path to config file
+configFilePath = "/etc/bliss-boot/config.py"
 
-    try:
-        config = loader.load_module("config")
-    except FileNotFoundError:
-        print("Your configuration file \"" + config_file + "\" was not found!")
-        quit(1)
+# Load the configuration file
+loader = machinery.SourceFileLoader("config", configFilePath)
 
-    # Returns the configuration file as a module
-    @classmethod
-    def get_config(cls):
-        return cls.config
+try:
+    configModule = loader.load_module("config")
+except FileNotFoundError:
+    print("Your configuration file \"" + configFilePath + "\" was not found!")
+    quit(1)
 
-    # Returns the path to the configuration file
-    @classmethod
-    def get_config_file(cls):
-        return cls.config_file
+# Returns the configuration file as a module
+def GetConfigModule():
+    return configModule
+
+# Returns the path to the configuration file
+def GetConfigFilePath():
+    return configFilePath

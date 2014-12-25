@@ -14,79 +14,58 @@
 
 import os
 
-from libs.Toolkit import Toolkit as tools
+from libs.Tools import Tools
 from libs.Scanner import Scanner
 from libs.Installer import Installer
-from libs.ConfigLoader import ConfigLoader
 
+import libs.ConfigLoader as ConfigLoader
 import libs.Variables as var
 
-scanner = Scanner()
-
-config = ConfigLoader.get_config()
+config = ConfigLoader.GetConfigModule()
 
 class Manager(object):
-    def __init__(self):
-        # Find all the kernels in the user's boot directory (config.bootdir)
-        scanner.find_boot_kernels()
-
-        # Find all the kernels that the user configured in their configuration file
-        scanner.find_config_kernels()
-
-        # Find all the kernels that were found in their boot directory and where a definition was found in their configuration file
-        scanner.factor_common_kernels()
-
-        # Checks to see that at least one kernel entry will be written
-        result = scanner.any_kernels()
-
-        if result == -1:
-            tools.die("Please add your desired kernels and their options to the 'kernels' list in " +
-            ConfigLoader.get_config_file() + ".\n" + "These entries should match the kernels you have in " +
-            config.bootdir + ".")
-
-        # Get /boot drive layout
-        self.layout = scanner.get_layout()
-
     # Generates the bootloader configuration
-    def write_entries(self):
-        output_file = ""
+    @classmethod
+    def WriteEntries(cls):
+        outputFile = ""
+        driveLayout = Scanner.GetDriveLayout()
+        isOutput = Tools.IsOutputSet()
 
-        is_output = tools.is_output()
-
-        if is_output:
-            output_file = tools.get_output_file()
+        if isOutput:
+            outputFile = Tools.GetOutputFile()
 
             # Check to see if the directory for this file exists. If it doesn't
             # create any directories leading up to the output file so that we don't
             # get a "FileNotFoundError" later on
-            output_parent = os.path.dirname(output_file)
+            outputFileFullPath = os.path.abspath(outputFile)
+            outputFileParentDir = os.path.dirname(outputFileFullPath)
 
-            if not os.path.exists(output_parent):
-                self.create_output_dir(output_parent)
+            if not os.path.exists(outputFileParentDir):
+                cls.CreateOutputDirectory(outputFileParentDir)
 
-        elif not is_output and config.bootloader == "grub2":
-            output_file = "grub.cfg"
-        elif not is_output and config.bootloader == "extlinux":
-            output_file = "extlinux.conf"
+        elif not isOutput and config.bootloader == "grub2":
+            outputFile = "grub.cfg"
+        elif not isOutput and config.bootloader == "extlinux":
+            outputFile = "extlinux.conf"
 
         # Check to see what's the bootloader before we start adding
         # all the entries, depending the bootloader we can cleanly start
         # adding generic information like default kernel, timeouts, etc
-        position = scanner.search(config.default)
+        position = Scanner.FindDefaultKernel()
 
         if position != -1:
             if config.bootloader == "grub2":
-                tools.eprint("Generating GRUB 2 configuration ...")
+                Tools.Print("Generating GRUB 2 configuration ...")
 
-                bootdrive = scanner.get_grub2_bootdrive()
+                bootdrive = Scanner.GetGrub2BootDrive()
 
-                if os.path.exists(output_file):
-                    if tools.is_force():
-                        dossier = open(output_file, "w")
+                if os.path.exists(outputFile):
+                    if Tools.IsForceSet():
+                        dossier = open(outputFile, "w")
                     else:
-                        tools.die("Target file: " + output_file + " already exists. Pass -f to overwrite.")
+                        Tools.Fail("Target file: " + outputFile + " already exists. Pass -f to overwrite.")
                 else:
-                    dossier = open(output_file, "w")
+                    dossier = open(outputFile, "w")
 
                 dossier.write("set timeout=" + str(config.timeout) + "\n")
                 dossier.write("set default=" + str(position) + "\n")
@@ -99,11 +78,11 @@ class Manager(object):
                 # gpt. This ambiguity will be the reason both grub modules will
                 # be inserted.
 
-                if self.layout == "gpt":
+                if driveLayout == "gpt":
                     dossier.write("insmod part_gpt\n")
-                elif self.layout == "msdos":
+                elif driveLayout == "msdos":
                     dossier.write("insmod part_msdos\n")
-                elif self.layout == "none":
+                elif driveLayout == "none":
                     dossier.write("insmod part_gpt\n")
                     dossier.write("insmod part_msdos\n")
 
@@ -112,136 +91,138 @@ class Manager(object):
                     dossier.write("insmod efi_uga\n")
                     dossier.write("insmod fat\n")
 
-                if config.zfs:
+                if config.wholeDiskZfs:
                     dossier.write("insmod zfs\n")
 
-                if config.goody_bag:
-                    for candy in config.goody_bag:
+                if config.goodyBag:
+                    for candy in config.goodyBag:
                         dossier.write("insmod " + candy + "\n")
 
-                if not config.zfs:
+                if not config.wholeDiskZfs:
                     dossier.write("\nset root='" + bootdrive + "'\n")
 
                 dossier.write("\n")
                 dossier.close()
             elif config.bootloader == "extlinux":
-                tools.eprint("Generating extlinux configuration ...")
+                Tools.Print("Generating extlinux configuration ...")
 
                 # Gets the name of the default kernel
-                dk_name = scanner.get_kernel(position)[0]
+                defaultKernelLabel = Scanner.GetKernel(position)[0]
 
-                if os.path.exists(output_file):
-                    if tools.is_force():
-                        dossier = open(output_file, "w")
+                if os.path.exists(outputFile):
+                    if Tools.IsForceSet():
+                        dossier = open(outputFile, "w")
                     else:
-                        tools.die("Target file: " + output_file + " already exists. Pass -f to overwrite.")
+                        Tools.Fail("Target file: " + outputFile + " already exists. Pass -f to overwrite.")
                 else:
-                    dossier = open(output_file, "w")
+                    dossier = open(outputFile, "w")
 
                 dossier.write("TIMEOUT " + str(int(config.timeout * 10)) + "\n")
 
-                if not config.el_auto_boot:
-                    dossier.write("UI " + config.el_ui + "\n")
+                if not config.extlinuxAutoBoot:
+                    dossier.write("UI " + config.extlinuxUi + "\n")
 
                 dossier.write("\n")
-                dossier.write("DEFAULT " + dk_name + str(position) + "\n\n")
-                dossier.write("MENU TITLE " + config.el_m_title + "\n")
-                dossier.write("MENU COLOR title " + config.el_c_title + "\n")
-                dossier.write("MENU COLOR border " + config.el_c_border + "\n")
-                dossier.write("MENU COLOR unsel " + config.el_c_unsel + "\n")
+                dossier.write("DEFAULT " + defaultKernelLabel + str(position) + "\n\n")
+                dossier.write("MENU TITLE " + config.extlinuxMenuTitle + "\n")
+                dossier.write("MENU COLOR title " + config.extlinuxTitleColor + "\n")
+                dossier.write("MENU COLOR border " + config.extlinuxBorderColor + "\n")
+                dossier.write("MENU COLOR unsel " + config.extlinuxUnselectedColor + "\n")
                 dossier.write("\n")
                 dossier.close()
             else:
-                tools.die("The bootloader defined in " + ConfigLoader.get_config_file() + " is not supported.")
+                Tools.Fail("The bootloader defined in " + ConfigLoader.GetConfigFilePath() + " is not supported.")
         else:
-            tools.die("The default kernel entry in " + ConfigLoader.get_config_file() + " was not found in " + config.bootdir)
+            Tools.Fail("The default kernel entry in " + ConfigLoader.GetConfigFilePath() + " was not found in " + config.kernelDirectory)
 
         # Add all our desired kernels
-        for kernel in scanner.get_common_kernels():
+        for kernel in Scanner.GetCommonKernels():
             # Get the position so that we can create the labels correctly
-            position = scanner.search(kernel[1])
+            position = Scanner.GetKernelIndexInCommonList(kernel)
 
-            tools.esucc("Adding: " + kernel[0] + " - " + kernel[1])
+            Tools.Success("Adding: " + kernel[0] + " - " + kernel[1])
 
-            cs = self.strip_head(config.bootdir)
-            full_kernel_path = cs + "/" + kernel[1]
+            cs = cls.StripHead(config.kernelDirectory)
+            kernelPath = cs + "/" + kernel[1]
 
             # Depending the bootloader we have specified, generate
             # its appropriate configuration.
             if config.bootloader == "grub2":
                 # Open it in append mode since the header was previously
                 # created before.
-                dossier = open(output_file, "a")
+                dossier = open(outputFile, "a")
                 dossier.write("menuentry \"" + kernel[0] + " - " + kernel[1] + "\" {\n")
 
-                if config.zfs:
-                    dossier.write("\tlinux " + bootdrive + "/@" + full_kernel_path + "/" + config.kernel_prefix + " " + kernel[2] + "\n")
+                if config.wholeDiskZfs:
+                    dossier.write("\tlinux " + bootdrive + "/@" + kernelPath + "/" + kernel[3] + " " + kernel[5] + "\n")
 
                     if config.initrd:
-                        dossier.write("\tinitrd " + bootdrive + "/@" + full_kernel_path + "/" + config.initrd_prefix + "\n")
+                        dossier.write("\tinitrd " + bootdrive + "/@" + kernelPath + "/" + kernel[4] + "\n")
 
                 else:
-                    dossier.write("\tlinux " + full_kernel_path + "/" + config.kernel_prefix + " " + kernel[2] + "\n")
+                    dossier.write("\tlinux " + kernelPath + "/" + kernel[3] + " " + kernel[5] + "\n")
 
                     if config.initrd:
-                        dossier.write("\tinitrd " + full_kernel_path + "/" + config.initrd_prefix + "\n")
+                        dossier.write("\tinitrd " + kernelPath + "/" + kernel[4] + "\n")
 
                 dossier.write("}\n\n")
                 dossier.close()
             elif config.bootloader == "extlinux":
-                dossier = open(output_file, "a")
+                dossier = open(outputFile, "a")
                 dossier.write("LABEL " + kernel[0] + str(position) + "\n")
                 dossier.write("\tMENU LABEL " + kernel[0] + " - " + kernel[1] + "\n")
-                dossier.write("\tLINUX " + full_kernel_path + "/" + config.kernel_prefix + "\n")
+                dossier.write("\tLINUX " + kernelPath + "/" + kernel[3] + "\n")
 
                 if config.initrd:
-                    dossier.write("\tINITRD " + full_kernel_path + "/" + config.initrd_prefix + "\n")
+                    dossier.write("\tINITRD " + kernelPath + "/" + kernel[4] + "\n")
 
-                dossier.write("\tAPPEND " + kernel[2] + "\n")
+                dossier.write("\tAPPEND " + kernel[5] + "\n")
                 dossier.write("\n")
                 dossier.close()
 
         # Append anything else the user wants automatically added
         if config.append and config.append_stuff:
-            tools.eprint("Appending additional information ...")
+            Tools.Print("Appending additional information ...")
 
             if config.bootloader == "grub2":
-                dossier = open(output_file, "a")
-                dossier.write(config.append_stuff)
+                dossier = open(outputFile, "a")
+                dossier.write(config.appendStuff)
                 dossier.close()
             elif config.bootloader == "extlinux":
-                dossier = open(output_file, "a")
-                dossier.write(config.append_stuff)
+                dossier = open(outputFile, "a")
+                dossier.write(config.appendStuff)
                 dossier.close()
 
         # Check to make sure that the file was created successfully.
         # If so let the user know..
-        if os.path.isfile(output_file):
-            tools.esucc("'" + output_file + "' has been created!")
+        if os.path.isfile(outputFile):
+            Tools.Success("'" + outputFile + "' has been created!")
         else:
-            tools.die("Either the file couldn't be created or the specified bootloader isn't supported.")
+            Tools.Fail("Either the file couldn't be created or the specified bootloader isn't supported.")
 
     # Triggers bootloader installation
-    def install_bootloader(self):
+    @classmethod
+    def InstallBootloader(cls):
         # Set the drive using the /boot entry in /etc/fstab if the user wants
         # to install a bootloader but didn't specify the drive themselves as an argument.
-        if not tools.get_bl_drive():
-            installer = Installer(scanner.get_bootdrive())
+        if not Tools.GetBootloaderDrive():
+            installer = Installer(Scanner.GetBootDrive())
         else:
-            installer = Installer(tools.get_bl_drive())
+            installer = Installer(Tools.GetBootloaderDrive())
 
         # Set extlinux specific information before we start
-        if installer.get_bootloader() == "extlinux":
-            installer.set_drive_number(scanner.get_bootdrive_num())
-            installer.set_drive_type(scanner.get_layout())
+        if installer.GetBootloader() == "extlinux":
+            installer.SetDriveNumber(Scanner.GetBootDriveNumber())
+            installer.SetDriveType(Scanner.GetDriveLayout())
 
         installer.start()
 
     # Strips the first directory of the path passed. Used to get a good path and not need
     # a boot symlink in /boot
-    def strip_head(self, path):
-        if path:
-            splinters = path.split("/")
+    @classmethod
+    def StripHead(cls, vPath):
+        if vPath:
+            splinters = vPath.split("/")
             srange = len(splinters)
 
             if srange >= 3:
@@ -256,12 +237,13 @@ class Manager(object):
                 # so just return /
                 return "/"
         else:
-            tools.die("The value to strip is empty ...")
+            Tools.Fail("The value to strip is empty ...")
 
     # Creates all the directories needed so that the output file can be written
-    def create_output_dir(self, parent_dir):
-        if not os.path.exists(parent_dir):
-            os.makedirs(parent_dir)
+    @classmethod
+    def CreateOutputDirectory(cls, vParentDirectory):
+        if not os.path.exists(vParentDirectory):
+            os.makedirs(vParentDirectory)
 
-            if not os.path.exists(parent_dir):
-                tools.die("Unable to create the " + parent_dir + " directory ...")
+            if not os.path.exists(vParentDirectory):
+                Tools.Fail("Unable to create the " + vParentDirectory + " directory ...")

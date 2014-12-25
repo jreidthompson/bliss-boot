@@ -2,7 +2,12 @@
 ------------
 - The application has been refactored.
 - Relicensed to the Apache License 2.0
-- Supports generating the correct bootloader configuration when using UUID= for the /boot in /etc/fstab
+- Supports generating the correct bootloader configuration when using UUID=/PARTUUID= for the /boot in /etc/fstab
+- You are now able to set the kernel and initrd names for each entry
+- Fixed a bug where if multiple entries had the same kernel version, the generator would label
+  all of those entries with the same index.
+- The default kernel is now defined within the kernel array and not a separate 'default' option
+- Fixed a bug where specifying a non-absolute path to an output file would cause a FileNotFound exception.
 
 1.1.0
 ------------

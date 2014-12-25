@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from libs.ConfigLoader import ConfigLoader
+import libs.ConfigLoader as ConfigLoader
 
-config = ConfigLoader.get_config()
+config = ConfigLoader.GetConfigModule()
 
 # Program Information
 name = "Bliss Boot"
@@ -29,7 +29,7 @@ grub2 = "/usr/sbin/grub2-install"
 extlinux = "/sbin/extlinux"
 sgdisk = "/usr/sbin/sgdisk"
 
-el_gpt_firm = "/usr/share/syslinux/gptmbr.bin"
-el_mbr_firm = "/usr/share/syslinux/mbr.bin"
-el_ui = "/usr/share/syslinux/" + config.el_ui
-el_libutil = "/usr/share/syslinux/libutil.c32"
+extlinuxGptFirmware = "/usr/share/syslinux/gptmbr.bin"
+extlinuxMbrFirmware = "/usr/share/syslinux/mbr.bin"
+extlinuxUi = "/usr/share/syslinux/" + config.extlinuxUi
+extlinuxLibUtil = "/usr/share/syslinux/libutil.c32"

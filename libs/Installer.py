@@ -16,152 +16,163 @@ import os
 import shutil
 
 from subprocess import call
-from libs.Toolkit import Toolkit as tools
+from libs.Tools import Tools
 
 import libs.Variables as var
 
 class Installer(object):
-    def __init__(self, drive):
-        self.grub2 = tools.is_grub2()
-        self.extlinux = tools.is_extlinux()
-        self.bootloader = self.get_boot_install()
-        self.drive = drive
+    @classmethod
+    def __init__(cls, vDrive):
+        cls._useGrub2 = Tools.IsGrub2()
+        cls._useExtlinux = Tools.IsExtlinux()
 
         # Extlinux
-        self.path = tools.get_el_path()
-        self.drive_number = -1
-        self.drive_type = "none"
+        cls._extlinuxBootDirPath = Tools.GetExtlinuxBootDirPath()
+        cls._driveNumber = -1
+        cls._driveType = "none"
+        cls._drive = vDrive
+        cls._bootloader = cls.GetBootloaderToInstall()
 
     # Starts the bootloader install process
-    def start(self):
-        if self.bootloader == "grub2":
-            self.install_grub2()
-        elif self.bootloader == "extlinux":
-            self.install_extlinux()
+    @classmethod
+    def start(cls):
+        if cls._bootloader == "grub2":
+            cls.InstallGrub2()
+        elif cls._bootloader == "extlinux":
+            cls.InstallExtlinux()
         else:
-            tools.ewarn("Skipping bootloader installation ...")
+            Tools.Warn("Skipping bootloader installation ...")
 
     # Sets the drive's partition number (used for extlinux: example: /dev/sda1 = 1)
-    def set_drive_number(self, number):
-        self.drive_number = number
+    @classmethod
+    def SetDriveNumber(cls, vNumber):
+        cls._driveNumber = vNumber
 
     # Gets the drive's partition number
-    def get_drive_number(self):
-        return self.drive_number
+    @classmethod
+    def GetDriveNumber(cls):
+        return cls._driveNumber
 
     # Sets the drive's partition layout (gpt, msdos, etc)
-    def set_drive_type(self, drive_type):
-        self.drive_type = drive_type
+    @classmethod
+    def SetDriveType(cls, vDriveType):
+        cls._driveType = vDriveType
 
     # Gets the drive's partition layout
-    def get_drive_type(self):
-        return self.drive_type
+    @classmethod
+    def GetDriveType(cls):
+        return cls._driveType
 
     # Sets the bootloader we want to install
-    def set_bootloader(self, bootloader):
-        self.bootloader = bootloader
+    @classmethod
+    def SetBootloader(cls, vBootloader):
+        cls._bootloader = vBootloader
 
     # Gets the bootloader we want to install
-    def get_bootloader(self):
-        return self.bootloader
+    @classmethod
+    def GetBootloader(cls):
+        return cls._bootloader
 
     # Returns the bootloader to install if any
-    def get_boot_install(self):
-        if self.grub2 and self.extlinux:
-            tools.die("You cannot install both extlinux and grub2 in the same run!")
-        elif self.grub2:
+    @classmethod
+    def GetBootloaderToInstall(cls):
+        if cls._useGrub2 and cls._useExtlinux:
+            Tools.Fail("You cannot install both extlinux and grub2 in the same run!")
+        elif cls._useGrub2:
             return "grub2"
-        elif self.extlinux:
+        elif cls._useExtlinux:
             return "extlinux"
 
     # Installs GRUB 2
-    def install_grub2(self):
-        if self.drive:
-            tools.eprint("Installing GRUB 2 to " + self.drive + " ...")
+    @classmethod
+    def InstallGrub2(cls):
+        if cls._drive:
+            Tools.Print("Installing GRUB 2 to " + cls._drive + " ...")
 
             try:
-                result = call([var.grub2, self.drive])
+                result = call([var.grub2, cls._drive])
 
                 if not result:
-                    tools.esucc("GRUB 2 Installed Successfully!")
+                    Tools.Success("GRUB 2 Installed Successfully!")
                 else:
-                    tools.die("Failed to install GRUB 2 into " + self.drive + " !")
+                    Tools.Fail("Failed to install GRUB 2 into " + cls._drive + " !")
 
             except FileNotFoundError:
-                tools.die("GRUB 2 isn't installed. Please install it and try again!")
+                Tools.Fail("GRUB 2 isn't installed. Please install it and try again!")
         else:
-            tools.die("The GRUB 2 drive has not been defined!")
+            Tools.Fail("The GRUB 2 drive has not been defined!")
 
     # Installs Extlinux
-    def install_extlinux(self):
-        tools.eprint("Installing extlinux to " + self.path + " and writing firmware to " + self.drive + " ...")
+    @classmethod
+    def InstallExtlinux(cls):
+        Tools.Print("Installing extlinux to " + cls._extlinuxBootDirPath + " and writing firmware to " + cls._drive + " ...")
 
         # Make the directory to install extlinux in
-        if not os.path.exists(self.path):
-            os.makedirs(self.path)
+        if not os.path.exists(cls._extlinuxBootDirPath):
+            os.makedirs(cls._extlinuxBootDirPath)
 
-            if not os.path.exists(self.path):
-                tools.die("Unable to create the " + self.path + " directory ...")
+            if not os.path.exists(cls._extlinuxBootDirPath):
+                Tools.Fail("Unable to create the " + cls._extlinuxBootDirPath + " directory ...")
 
         # Install extlinux to folder
         try:
-            result = call([var.extlinux, "--install", self.path])
+            result = call([var.extlinux, "--install", cls._extlinuxBootDirPath])
         except FileNotFoundError:
-            tools.die("extlinux is not installed! Please install it and try again.")
+            Tools.Fail("extlinux is not installed! Please install it and try again.")
 
         if not result:
-            tools.esucc("extlinux was installed successfully to " + self.path + "!")
+            Tools.Success("extlinux was installed successfully to " + cls._extlinuxBootDirPath + "!")
         else:
-            tools.die("Failed to install extlinux into " + self.path)
+            Tools.Fail("Failed to install extlinux into " + cls._extlinuxBootDirPath)
 
         # Copy the menu ui the user specified, and libutil.c32
-        el_files = [
-            var.el_ui,
-            var.el_libutil,
+        extlinuxFiles = [
+            var.extlinuxUi,
+            var.extlinuxLibUtil,
         ]
 
-        for i in el_files:
-            if os.path.isfile(i):
-                shutil.copy(i, self.path)
+        for file in extlinuxFiles:
+            if os.path.isfile(file):
+                shutil.copy(file, cls._extlinuxBootDirPath)
 
-                if not os.path.isfile(self.path + "/" + os.path.basename(i)):
-                    tools.die("Failed to copy " + os.path.basename(i) + "!")
+                if not os.path.isfile(cls._extlinuxBootDirPath + "/" + os.path.basename(file)):
+                    Tools.Fail("Failed to copy " + os.path.basename(file) + "!")
             else:
-                tools.die(os.path.basename(i) + " doesn't exist")
+                Tools.Fail(os.path.basename(file) + " doesn't exist")
 
         # GPT
-        if self.drive_type == "gpt":
-            firm = var.el_gpt_firm
+        if cls._driveType == "gpt":
+            firm = var.extlinuxGptFirmware
 
             # Toggle GPT bios bootable flag
-            cmd = var.sgdisk + " " + self.drive + " --attributes=" + self.drive_number + ":set:2"
+            cmd = var.sgdisk + " " + cls._drive + " --attributes=" + cls._driveNumber + ":set:2"
             result = call(cmd, shell=True)
 
             if not result:
-                tools.esucc("Successfully toggled legacy bios bootable flag!")
-                cmd = var.sgdisk + " " + self.drive + " --attributes=" + self.drive_number + ":show"
+                Tools.Success("Successfully toggled legacy bios bootable flag!")
+                cmd = var.sgdisk + " " + cls._drive + " --attributes=" + cls._driveNumber + ":show"
 
                 try:
                     result = call(cmd, shell=True)
                 except FileNotfoundError:
-                    tools.die("gptfdisk is not installed! Please install it and try again.")
+                    Tools.Fail("gptfdisk is not installed! Please install it and try again.")
             else:
-                tools.die("Error setting legacy bios bootable flag!")
+                Tools.Fail("Error setting legacy bios bootable flag!")
         # MBR
-        elif self.drive_type == "msdos":
-            firm = var.el_mbr_firm
+        elif cls._driveType == "msdos":
+            firm = var.extlinuxMbrFirmware
 
         # Write the firmware to the drive
-        if self.drive_type == "gpt" or self.drive_type == "msdos":
+        if cls._driveType == "gpt" or cls._driveType == "msdos":
             if os.path.isfile(firm):
-                tools.eprint("Writing firmware to " + self.drive + " ...")
+                Tools.Print("Writing firmware to " + cls._drive + " ...")
 
-                cmd = "dd bs=440 conv=notrunc count=1 if=" + firm + " of=" + self.drive
+                cmd = "dd bs=440 conv=notrunc count=1 if=" + firm + " of=" + cls._drive
                 result = call(cmd, shell=True)
 
                 if not result:
-                    tools.esucc(os.path.basename(firm) + " was successfully written to " + self.drive + "!")
+                    Tools.Success(os.path.basename(firm) + " was successfully written to " + cls._drive + "!")
                 else:
-                    tools.die("Failed to write extlinux firmware to " + self.drive + "!")
+                    Tools.Fail("Failed to write extlinux firmware to " + cls._drive + "!")
         else:
-            tools.die("Unable to determine firmware to use for extlinux ...")
+            Tools.Fail("Unable to determine firmware to use for extlinux ...")

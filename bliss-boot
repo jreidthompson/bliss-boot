@@ -14,28 +14,46 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from libs.Tools import Tools
 from libs.Manager import Manager
-from libs.Toolkit import Toolkit as tools
-from libs.ConfigLoader import ConfigLoader
 from libs.Scanner import Scanner
 
-class Boot:
-    def __init__(self):
-        # Print the header information
-        tools.PrintHeader()
+# Initialize Scanner
+scanner = Scanner()
+
+# Sets up the Manager ;) (This is what is going to write our file)
+manager = Manager()
+
+class Main(object):
+    @classmethod
+    def start(cls):
+         # Print the header information
+        Tools.PrintHeader()
 
         # Gets parameters
-        tools.welcome()
+        Tools.ProcessArguments()
 
-        # Sets up the Manager ;) (This is what is going to write our file)
-        self.manager = Manager()
+         # Find all the kernels in the user's boot directory (config.bootdir)
+        Scanner.FindBootKernels()
 
-    def start(self):
-        if not tools.only_bootloader():
-            self.manager.write_entries()
+        # Find all the kernels that the user configured in their configuration file
+        Scanner.FindKernelsInConfig()
 
-        self.manager.install_bootloader()
+        # Find all the kernels that were found in their boot directory and where a definition was found in their configuration file
+        Scanner.FindCommonKernels()
+
+        # Checks to see that at least one kernel entry will be written
+        result = Scanner.AnyKernelsExist()
+
+        if result == -1:
+            Tools.Fail("Please add your desired kernels and their options to the 'kernels' list in " +
+            ConfigLoader.GetConfigFilePath() + ".\n" + "These entries should match the kernels you have in " +
+            config.kernelDirectory + ".")
+
+        if not Tools.OnlyInstallBootloader():
+            Manager.WriteEntries()
+
+        Manager.InstallBootloader()
 
 if __name__ == "__main__":
-    booter = Boot()
-    booter.start()
+    Main.start()
