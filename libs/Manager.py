@@ -206,13 +206,13 @@ class Manager(object):
         # Set the drive using the /boot entry in /etc/fstab if the user wants
         # to install a bootloader but didn't specify the drive themselves as an argument.
         if not Tools.GetBootloaderDrive():
-            installer = Installer(Scanner.GetBootDrive())
+            installer = Installer(Tools.GetDriveRoot(Scanner._bootDrive))
         else:
             installer = Installer(Tools.GetBootloaderDrive())
 
         # Set extlinux specific information before we start
         if installer.GetBootloader() == "extlinux":
-            installer.SetDriveNumber(Scanner.GetBootDriveNumber())
+            installer.SetDriveNumber(Tools.GetDriveRootNumber(Scanner._bootDrive))
             installer.SetDriveType(Scanner.GetDriveLayout())
 
         installer.start()

@@ -13,8 +13,7 @@ Example:
 /boot/kernels/3.13.3-KS.01
 essage and then exits.
 
-3. Place your 'vmlinuz-3.11.2-FN.03' and other kernel files into their
-directories using just their name. Example:
+3. Place your 'vmlinuz-3.11.2-FN.03' and other kernel files into their directories. Example:
 
 /boot/kernels/3.11.2-FN.03/vmlinuz
 /boot/kernels/3.11.2-FN.03/initrd
@@ -27,23 +26,21 @@ directories using just their name. Example:
 
 A) Set bootloader to your choice: grub2, extlinux, etc...
 
-B) Select your 'default' kernel (should match the directory name /boot/kernels)
-
-C) Change any other options that are applicable to you
-
-D) Add your kernel to the 'kernels' list and its options. Example:
+B) Add your kernel to the 'kernels' list and its options. Make the third parameter a 1 instead of a 0
+to make it the default kernel in the bootloader. Example:
 
 kernels = (
-	("Gentoo", "3.11.2-FN.03", "root=tank/gentoo/root quiet"),
-	("Debian", "3.12.9-KS.01", "root=/dev/sda4 options='ro' quiet"),
-	("Arch", "3.13.3-KS.01", "root=/dev/mapper/vg-root quiet"),
+    ("Gentoo", "3.11.2-FN.03", 0, "vmlinuz", "initrd", "root=tank/gentoo/root quiet"),
+    ("Debian", "3.12.9-KS.01", 0, "vmlinuz-3.12.9-KS.01", "initramfs.img", "root=/dev/sda4 options='ro' quiet"),
+    ("Arch", "3.13.3-KS.01", 1, "bzImage", "initramfs-3.13.3-KS.01", "root=/dev/mapper/vg-root quiet"),
 )
+
+C) Change any other options that are applicable to you
 
 5. Run 'bliss-boot' and it should automatically detect your kernels
 and desired options and generate a configuration file for your desire kernel
 in the directory you are currently in. Take this file and put it in the
-appropriate location in /boot.essage and then exits.
-
+appropriate location in /boot.
 
 -----------------
 
@@ -52,6 +49,9 @@ Optional:
 All bootloader installs assume/will do the following:
 
 1. If the '-d' flag is not passed, it will use the /boot drive's entry in /etc/fstab
+
+    The /boot line in fstab can start with /dev, UUID=, or PARTUUID=. All other options are not supported.
+
 2. If installing extlinux and nothing is passed to the '-E' flag, then extlinux will
    be installed in /boot/extlinux.
 

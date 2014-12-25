@@ -8,6 +8,9 @@
   all of those entries with the same index.
 - The default kernel is now defined within the kernel array and not a separate 'default' option
 - Fixed a bug where specifying a non-absolute path to an output file would cause a FileNotFound exception.
+- UUID=/PARTUUID= are also supported when trying to install the bootloader via the -d command.
+  Example: bliss-boot -B -G -d UUID=4443433f-5f03-475f-974e-5345fd524c34
+  The above would only install the grub 2 bootloader to the drive with that specified UUID.
 
 1.1.0
 ------------

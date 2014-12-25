@@ -14,6 +14,7 @@
 
 import os
 import sys
+import re
 
 from subprocess import call
 from subprocess import check_output
@@ -78,7 +79,8 @@ class Tools(object):
                 elif arguments[i] == "-d" or arguments[i] == "--drive":
                     try:
                         if cls.IsFlag(arguments[i+1]) != 0:
-                            cls._bootloaderDrive = arguments[i+1]
+                            cls._unmappedBootloaderDrive = arguments[i+1]
+                            cls._bootloaderDrive = cls.GetDriveRoot(cls.MapIdentifierToDrive(cls._unmappedBootloaderDrive))
                     except IndexError:
                         pass
 
@@ -103,6 +105,64 @@ class Tools(object):
                 # Sets the tasks to do (bootloader|config only, or both)
                 elif arguments[i] == "-B" or arguments[i] == "--only-bootloader":
                     cls._onlyBootloader = 1
+
+    # Processes a UUID/PARTUUID= field in order to find out where the real drive is,
+    # instead of the traditional /dev/sda, /dev/md0 references
+    @classmethod
+    def MapIdentifierToDrive(cls, vIdValue):
+        splitResults = vIdValue.split("=")
+
+        targetDrive = ""
+
+        for i in range(len(splitResults)):
+            if splitResults[i] == "UUID":
+                targetDrive = cls.GetDriveFromIdentifier("UUID", splitResults[i+1])
+                break
+            elif splitResults[i] == "PARTUUID":
+                targetDrive = cls.GetDriveFromIdentifier("PARTUUID", splitResults[i+1])
+                break
+
+        # If we aren't using anything fancy like UUID=, then the
+        # boot drive field and the split results will be the same
+        if vIdValue == ''.join(splitResults):
+            targetDrive = vIdValue
+
+        return targetDrive
+
+    # Returns the drive matching this identifier
+    @classmethod
+    def GetDriveFromIdentifier(cls, vId, vValue):
+        cmd = 'blkid -o full -s ' + vId + ' | grep ' + vValue + ' | cut -d ":" -f 1'
+        results = check_output(cmd, shell=True, universal_newlines=True).strip()
+
+        if results:
+            return results
+        else:
+            Tools.Fail("No drives were found with the " + vValue + " value.")
+
+     # Returns the drive root (i.e /dev/sda)
+    @classmethod
+    def GetDriveRoot(cls, vDrive):
+        # Remove the partition number so that we can find the drive root
+        match = re.sub("\d$", "", vDrive)
+
+        if match:
+            return match
+
+        return -1
+
+    # Returns only the number of the boot drive
+    @classmethod
+    def GetDriveRootNumber(cls, vDrive):
+        # This is the partition number which will be used to set the
+        # Legacy BIOS Bootable flag if the user uses extlinux and it's GPT
+        partitionNumber = re.search("\d+", vDrive)
+
+        if partitionNumber:
+            return partitionNumber.group()
+
+        Tools.Warn("Skipping extlinux bootloader installation since your /boot (" + vDrive + ") is probably on LVM.")
+        return -1
 
     # Prints the header of the application
     @classmethod

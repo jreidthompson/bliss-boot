@@ -48,7 +48,7 @@ class Scanner(object):
 
         # boot drive
         cls._bootDriveField = cls._fstabValues[0]
-        cls._bootDrive = cls.ProcessBootDriveField()
+        cls._bootDrive = Tools.MapIdentifierToDrive(cls._bootDriveField)
 
         # Detect the layout of the /boot drive
         cls.DetectDriveLayout()
@@ -138,30 +138,6 @@ class Scanner(object):
                 # This will happen if the user has a raid or lvm device as their /boot.
                 cls._driveLayout = "none"
 
-    # Returns only the number of the boot drive
-    @classmethod
-    def GetBootDriveNumber(cls):
-        # This is the partition number which will be used to set the
-        # Legacy BIOS Bootable flag if the user uses extlinux and it's GPT
-        partitionNumber = re.search("\d+", cls._bootDrive)
-
-        if partitionNumber:
-            return partitionNumber.group()
-
-        Tools.Warn("Skipping extlinux bootloader installation since your /boot (" + cls._bootDrive + ") is probably on LVM.")
-        return -1
-
-    # Returns the drive root (i.e /dev/sda)
-    @classmethod
-    def GetBootDrive(cls):
-        # Remove the partition number so that we can find the drive root
-        match = re.sub("\d$", "", cls._bootDrive)
-
-        if match:
-            return match
-
-        return -1
-
     # Converts the fstab /boot drive entry to a grub 2 compatible format
     # and returns it as a string: (gpt) /dev/sda1 -> (hd0,gpt1)
     @classmethod
@@ -243,40 +219,6 @@ class Scanner(object):
 
             # We've failed :(
             Tools.Fail("Unable to generate the boot drive entry.")
-
-    # Processes the boot drive field, taking into account things like UUID=
-    # instead of the traditional /dev/sda, /dev/md0 references
-    @classmethod
-    def ProcessBootDriveField(cls):
-        splitResults = cls._bootDriveField.split("=")
-
-        targetDrive = ""
-
-        for i in range(len(splitResults)):
-            if splitResults[i] == "UUID":
-                targetDrive = cls.GetDriveFromIdentifier("UUID", splitResults[i+1])
-                break
-            elif splitResults[i] == "PARTUUID":
-                targetDrive = cls.GetDriveFromIdentifier("PARTUUID", splitResults[i+1])
-                break
-
-        # If we aren't using anything fancy like UUID=, then the
-        # boot drive field and the split results will be the same
-        if cls._bootDriveField == ''.join(splitResults):
-            targetDrive = cls._bootDriveField
-
-        return targetDrive
-
-    # Returns the drive matching this identifier
-    @classmethod
-    def GetDriveFromIdentifier(cls, vIdentifier, vIdValue):
-        cmd = 'blkid -o full -s ' + vIdentifier + ' | grep ' + vIdValue + ' | cut -d ":" -f 1'
-        results = check_output(cmd, shell=True, universal_newlines=True).strip()
-
-        if results:
-            return results
-        else:
-            Tools.Fail("No drives were found with the " + vIdValue + " value.")
 
     # Returns the kernel set that was gathered
     @classmethod
