@@ -181,7 +181,7 @@ class Manager(object):
                 dossier.close()
 
         # Append anything else the user wants automatically added
-        if config.append and config.append_stuff:
+        if config.append and config.appendStuff:
             Tools.Print("Appending additional information ...")
 
             if config.bootloader == "grub2":
