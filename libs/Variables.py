@@ -1,16 +1,8 @@
 # Copyright 2014-2015 Jonathan Vasquez <jvasquez1011@gmail.com>
 #
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 2
-# as published by the Free Software Foundation.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along
-# with this program; if not, see <http://www.gnu.org/licenses/>.
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import libs.ConfigLoader as ConfigLoader
 
@@ -21,8 +13,8 @@ name = "Bliss Boot"
 author = "Jonathan Vasquez"
 email = "jvasquez1011@gmail.com"
 contact = author + " <" + email + ">"
-version = "2.0.1"
-license = "GPLv2"
+version = "2.0.2"
+license = "MPL 2.0"
 
 # Program Locations
 grub2 = "/usr/sbin/grub2-install"
