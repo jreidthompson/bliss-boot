@@ -1,8 +1,8 @@
-Bliss Boot - 2.0.2
+Bliss Boot - 2.0.3
 Jonathan Vasquez <jvasquez1011@gmail.com>
 Designed for Gentoo Linux
 
-Distributed under the MPL 2.0 which can be found in the LICENSE file.
+Licensed under the Simplified BSD License which can be found in the LICENSE file.
 
 This program generates a bootloader configuration file, and lets
 you automatically install the bootloader onto your drive.

@@ -1,8 +1,5 @@
 # Copyright 2014-2015 Jonathan Vasquez <jvasquez1011@gmail.com>
-#
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# Licensed under the Simplified BSD License which can be found in the LICENSE file.
 
 import os
 import sys
@@ -162,7 +159,7 @@ class Tools(object):
         cls.Print(cls.Colorize("yellow", "----------------------------------"))
         cls.Print(cls.Colorize("yellow", var.name + " - v" + var.version))
         cls.Print(cls.Colorize("yellow", var.contact))
-        cls.Print(cls.Colorize("yellow", "Distributed under the " + var.license))
+        cls.Print(cls.Colorize("yellow", "Licensed under the " + var.license))
         cls.Print(cls.Colorize("yellow", "----------------------------------") + "\n")
 
     # Prints the usage information
