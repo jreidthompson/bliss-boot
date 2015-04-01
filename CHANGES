@@ -1,3 +1,11 @@
+2.1.0
+------------
+- Removed support for installing bootloaders. You should use the normal tools directly.
+  This means that this application is solely purposed to be a frontend for easy bootloader
+  configuration generation (Which was the original purpose of this app).
+- Relicensed to the GPLv2 (Only GPLv2, Not GPLv2+)
+- Other minor improvements
+
 2.0.3
 ------------
 - Relicensed to the Simplified BSD License

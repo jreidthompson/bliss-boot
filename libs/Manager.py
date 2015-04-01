@@ -1,11 +1,10 @@
 # Copyright 2014-2015 Jonathan Vasquez <jvasquez1011@gmail.com>
-# Licensed under the Simplified BSD License which can be found in the LICENSE file.
+# Licensed under the GPLv2 which can be found in the LICENSE file.
 
 import os
 
 from libs.Tools import Tools
 from libs.Scanner import Scanner
-from libs.Installer import Installer
 
 import libs.ConfigLoader as ConfigLoader
 import libs.Variables as var
@@ -31,7 +30,6 @@ class Manager(object):
 
             if not os.path.exists(outputFileParentDir):
                 cls.CreateOutputDirectory(outputFileParentDir)
-
         elif not isOutput and config.bootloader == "grub2":
             outputFile = "grub.cfg"
         elif not isOutput and config.bootloader == "extlinux":
@@ -129,7 +127,7 @@ class Manager(object):
             # Get the position so that we can create the labels correctly
             position = Scanner.GetKernelIndexInCommonList(kernel)
 
-            Tools.Success("Adding: " + kernel[0] + " - " + kernel[1])
+            Tools.Warn("Adding: " + kernel[0] + " - " + kernel[1])
 
             cs = cls.StripHead(config.kernelDirectory)
             kernelPath = cs + "/" + kernel[1]
@@ -147,7 +145,6 @@ class Manager(object):
 
                     if config.useInitrd:
                         dossier.write("\tinitrd " + bootdrive + "/@" + kernelPath + "/" + kernel[4] + "\n")
-
                 else:
                     dossier.write("\tlinux " + kernelPath + "/" + kernel[3] + " " + kernel[5] + "\n")
 
@@ -188,23 +185,6 @@ class Manager(object):
             Tools.Success("'" + outputFile + "' has been created!")
         else:
             Tools.Fail("Either the file couldn't be created or the specified bootloader isn't supported.")
-
-    # Triggers bootloader installation
-    @classmethod
-    def InstallBootloader(cls):
-        # Set the drive using the /boot entry in /etc/fstab if the user wants
-        # to install a bootloader but didn't specify the drive themselves as an argument.
-        if not Tools.GetBootloaderDrive():
-            installer = Installer(Tools.GetDriveRoot(Scanner._bootDrive))
-        else:
-            installer = Installer(Tools.GetBootloaderDrive())
-
-        # Set extlinux specific information before we start
-        if installer.GetBootloader() == "extlinux":
-            installer.SetDriveNumber(Tools.GetDriveRootNumber(Scanner._bootDrive))
-            installer.SetDriveType(Scanner.GetDriveLayout())
-
-        installer.start()
 
     # Strips the first directory of the path passed. Used to get a good path and not need
     # a boot symlink in /boot

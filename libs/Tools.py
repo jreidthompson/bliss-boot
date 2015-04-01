@@ -1,5 +1,5 @@
 # Copyright 2014-2015 Jonathan Vasquez <jvasquez1011@gmail.com>
-# Licensed under the Simplified BSD License which can be found in the LICENSE file.
+# Licensed under the GPLv2 which can be found in the LICENSE file.
 
 import os
 import sys
@@ -14,19 +14,10 @@ import libs.Variables as var
 class Tools(object):
     _force = 0
     _outputFile = ""
-    _bootloaderDrive = ""
-    _useGrub2 = 0
-    _useExtlinux = 0
-    _extlinuxBootDirPath = "/boot/extlinux"
-    _onlyBootloader = 0
 
     _options = (
         ("-o", "--output"),
         ("-f", "--force"),
-        ("-d", "--drive"),
-        ("-E", "--install-extlinux"),
-        ("-G", "--install-grub2"),
-        ("-B", "--only-bootloader"),
         ("-h", "--help"),
     )
 
@@ -64,36 +55,9 @@ class Tools(object):
                 elif arguments[i] == "-f" or arguments[i] == "--force":
                     cls._force = 1
 
-                # Set the drive where we want to install the bootloader
-                elif arguments[i] == "-d" or arguments[i] == "--drive":
-                    try:
-                        if cls.IsFlag(arguments[i+1]) != 0:
-                            cls._unmappedBootloaderDrive = arguments[i+1]
-                            cls._bootloaderDrive = cls.GetDriveRoot(cls.MapIdentifierToDrive(cls._unmappedBootloaderDrive))
-                    except IndexError:
-                        pass
-
-                # Let the program know that we want to install extlinux
-                elif arguments[i] == "-E" or arguments[i] == "--install-extlinux":
-                    cls._useExtlinux = 1
-
-                    try:
-                        if cls.IsFlag(arguments[i+1]) != 0:
-                            cls._extlinuxBootDirPath = arguments[i+1]
-                    except IndexError:
-                        pass
-
-                # Let the program know that we want to install GRUB 2
-                elif arguments[i] == "-G" or arguments[i] == "--install-grub2":
-                    cls._useGrub2 = 1
-
                 # Displays the help/usage message
                 elif arguments[i] == "-h" or arguments[i] == "--help":
                     cls.PrintUsage()
-
-                # Sets the tasks to do (bootloader|config only, or both)
-                elif arguments[i] == "-B" or arguments[i] == "--only-bootloader":
-                    cls._onlyBootloader = 1
 
     # Processes a UUID/PARTUUID= field in order to find out where the real drive is,
     # instead of the traditional /dev/sda, /dev/md0 references
@@ -129,30 +93,6 @@ class Tools(object):
         else:
             Tools.Fail("No drives were found with the " + vValue + " value.")
 
-     # Returns the drive root (i.e /dev/sda)
-    @classmethod
-    def GetDriveRoot(cls, vDrive):
-        # Remove the partition number so that we can find the drive root
-        match = re.sub("\d$", "", vDrive)
-
-        if match:
-            return match
-
-        return -1
-
-    # Returns only the number of the boot drive
-    @classmethod
-    def GetDriveRootNumber(cls, vDrive):
-        # This is the partition number which will be used to set the
-        # Legacy BIOS Bootable flag if the user uses extlinux and it's GPT
-        partitionNumber = re.search("\d+", vDrive)
-
-        if partitionNumber:
-            return partitionNumber.group()
-
-        Tools.Warn("Skipping extlinux bootloader installation since your /boot (" + vDrive + ") is probably on LVM.")
-        return -1
-
     # Prints the header of the application
     @classmethod
     def PrintHeader(cls):
@@ -168,12 +108,6 @@ class Tools(object):
         print("Usage: bliss-boot [OPTION]\n")
         print("-o, --output\t\t\tGenerates the configuration file at this location.\n")
         print("-f, --force\t\t\tOverwrites the file at the target output path.\n")
-        print("-d, --drive\t\t\tSpecifies the target drive to install the bootloader at.\n")
-        print("-B, --only-bootloader\t\tOnly installs the bootloader, doesn't generate the config file.\n")
-        print("-E, --install-extlinux\t\tInstalls extlinux and the MBR to the target path on disk and /boot drive (in fstab).")
-        print("\t\t\t\tExample: bliss-boot -E (optional: target folder) (optional: -d <drive>)\n")
-        print("-G, --install-grub2\t\tInstalls grub 2 to your drive")
-        print("\t\t\t\tExample: bliss-boot -G (optional: -d <drive>)\n")
         print("-h, --help\t\t\tPrints this help message and then exits.\n")
         quit()
 
@@ -216,16 +150,6 @@ class Tools(object):
     def Warn(cls, vMessage):
         call(["echo", "-e", cls.Colorize("yellow", vMessage)])
 
-    # Returns the value of whether or not GRUB 2 will be installed
-    @classmethod
-    def IsGrub2(cls):
-        return cls._useGrub2
-
-    # Returns the value of whether or not extlinux will be installed
-    @classmethod
-    def IsExtlinux(cls):
-        return cls._useExtlinux
-
     # Returns a positive number if an output option was set
     @classmethod
     def IsOutputSet(cls):
@@ -243,23 +167,3 @@ class Tools(object):
     @classmethod
     def IsForceSet(cls):
         return cls._force
-
-    # Returns directory where extlinux installs its files
-    @classmethod
-    def GetExtlinuxBootDirPath(cls):
-        return cls._extlinuxBootDirPath
-
-    # Sets the bootloader drive
-    @classmethod
-    def SetBootloaderDrive(cls, vDrive):
-        cls._bootloaderDrive = vDrive
-
-    # Returns the bootloader drive
-    @classmethod
-    def GetBootloaderDrive(cls):
-        return cls._bootloaderDrive
-
-    # Returns if we are only going to install the bootloader
-    @classmethod
-    def OnlyInstallBootloader(cls):
-        return cls._onlyBootloader
