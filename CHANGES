@@ -1,3 +1,7 @@
+2.1.1
+------------
+- Relicensed back to the Simplified BSD License
+
 2.1.0
 ------------
 - Removed support for installing bootloaders. You should use the normal tools directly.

@@ -1,5 +1,5 @@
 # Copyright 2014-2015 Jonathan Vasquez <jvasquez1011@gmail.com>
-# Licensed under the GPLv2 which can be found in the LICENSE file.
+# Licensed under the Simplified BSD License which can be found in the LICENSE file.
 
 # ---------- Kernels & Options ----------
 # Label, Version, 1 = Default Kernel (others are 0), Name of Kernel, Name of Initrd, Kernel Options
