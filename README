@@ -1,8 +1,8 @@
-Bliss Boot - 2.1.1
+Bliss Boot - 2.1.2
 Jonathan Vasquez <jvasquez1011@gmail.com>
 Designed for Gentoo Linux
 
-Licensed under the Simplified BSD License which can be found in the LICENSE file.
+Licensed under the Mozilla Public License 2.0 which can be found in the LICENSE file.
 
 This program enables you to easily generate a human-readable bootloader
 configuration file for various bootloaders.
